@@ -30,24 +30,59 @@ public class DataSeeder implements CommandLineRunner {
             return; // Data already seeded
         }
 
-        // 1. Seed Users
+        // 1. Seed Users with rich profile data
         User employee = User.builder()
+                .firstName("Alex")
+                .lastName("Morgan")
+                .fullName("Alex Morgan")
                 .email("employee@company.com")
                 .password(passwordEncoder.encode("password123"))
-                .fullName("Alex Morgan")
+                .phone("+1 (555) 234-5678")
+                .dateOfBirth(LocalDate.of(1992, 4, 15))
+                .gender("MALE")
+                .jobTitle("Engineering Lead")
                 .department(Department.ENGINEERING)
+                .employeeId("EMP-1042")
+                .location("San Francisco, CA")
+                .bio("Leading core infrastructure, DevOps, and cloud architecture at SaaSOptima.")
                 .role(Role.ROLE_EMPLOYEE)
                 .build();
 
         User admin = User.builder()
+                .firstName("Sarah")
+                .lastName("Jenkins")
+                .fullName("Sarah Jenkins")
                 .email("admin@company.com")
                 .password(passwordEncoder.encode("admin123"))
-                .fullName("Sarah Jenkins (Finance)")
+                .phone("+1 (555) 987-6543")
+                .dateOfBirth(LocalDate.of(1988, 9, 20))
+                .gender("FEMALE")
+                .jobTitle("VP of Finance")
                 .department(Department.FINANCE)
+                .employeeId("EMP-1001")
+                .location("New York, NY")
+                .bio("Overseeing SaaS procurement, departmental budgets, and cloud spend optimization.")
                 .role(Role.ROLE_ADMIN)
                 .build();
 
-        userRepository.saveAll(List.of(employee, admin));
+        User designer = User.builder()
+                .firstName("David")
+                .lastName("Kim")
+                .fullName("David Kim")
+                .email("david.kim@company.com")
+                .password(passwordEncoder.encode("password123"))
+                .phone("+1 (555) 345-6789")
+                .dateOfBirth(LocalDate.of(1994, 11, 8))
+                .gender("MALE")
+                .jobTitle("Staff Product Designer")
+                .department(Department.DESIGN)
+                .employeeId("EMP-1055")
+                .location("Austin, TX")
+                .bio("Designing design systems and user-centric software tools.")
+                .role(Role.ROLE_EMPLOYEE)
+                .build();
+
+        userRepository.saveAll(List.of(employee, admin, designer));
 
         // 2. Seed Department Budgets
         budgetRepository.saveAll(List.of(

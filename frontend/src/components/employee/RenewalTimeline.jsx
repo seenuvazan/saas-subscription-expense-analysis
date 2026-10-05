@@ -1,68 +1,83 @@
 import React from 'react';
+import VendorLogo from '../common/VendorLogo';
 import { formatDate, getDaysRemaining, formatCurrency } from '../../utils/formatters';
-import { Calendar, Clock, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 
 const RenewalTimeline = ({ subscriptions = [] }) => {
   const upcoming = [...subscriptions]
     .filter(s => s.status !== 'CANCELLED')
     .sort((a, b) => new Date(a.nextRenewalDate) - new Date(b.nextRenewalDate))
-    .slice(0, 5);
+    .slice(0, 6);
 
   return (
-    <div className="glass-card p-6 rounded-2xl border border-gray-800">
-      <div className="flex items-center justify-between mb-5">
-        <h3 className="font-bold text-base text-white flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-indigo-400" /> Upcoming Renewals Timeline
+    <div className="glass-card rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div
+        className="px-5 py-4 border-b flex items-center justify-between"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        <h3 className="font-bold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          <Calendar className="w-4 h-4" style={{ color: 'var(--accent)' }} />
+          Upcoming Renewals
         </h3>
-        <span className="text-xs text-gray-400">Next 30 Days</span>
+        <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Next 30 days</span>
       </div>
 
-      <div className="space-y-3">
+      {/* List */}
+      <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
         {upcoming.length === 0 ? (
-          <p className="text-xs text-gray-500 text-center py-6">No renewals scheduled soon.</p>
+          <div className="flex flex-col items-center py-12 text-center px-6">
+            <span className="text-3xl mb-2">🎉</span>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>All clear!</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>No renewals in the next 30 days.</p>
+          </div>
         ) : (
-          upcoming.map((sub) => {
+          upcoming.map(sub => {
             const daysLeft = getDaysRemaining(sub.nextRenewalDate);
-            const isUrgent = daysLeft <= 7;
-            const isWarning = daysLeft <= 14 && daysLeft > 7;
+            const isUrgent  = daysLeft <= 7;
+            const isWarning = daysLeft <= 14 && !isUrgent;
 
             return (
               <div
                 key={sub.id}
-                className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
-                  isUrgent
-                    ? 'bg-red-500/10 border-red-500/30'
+                className="flex items-center gap-3 px-4 py-3.5 transition-colors"
+                style={{
+                  background: isUrgent
+                    ? 'rgba(239,68,68,0.04)'
                     : isWarning
-                    ? 'bg-amber-500/10 border-amber-500/30'
-                    : 'bg-gray-900/60 border-gray-800 hover:border-gray-700'
-                }`}
+                    ? 'rgba(245,158,11,0.04)'
+                    : 'transparent',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-elevated)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = isUrgent ? 'rgba(239,68,68,0.04)' : isWarning ? 'rgba(245,158,11,0.04)' : 'transparent'; }}
               >
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${
-                    isUrgent ? 'bg-red-500/20 text-red-400' : 'bg-indigo-500/10 text-indigo-400'
-                  }`}>
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-sm text-gray-200">{sub.vendorName}</h4>
-                    <p className="text-xs text-gray-400">
-                      {sub.department} • {sub.category}
-                    </p>
-                  </div>
+                <VendorLogo name={sub.vendorName} size="xs" />
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                    {sub.vendorName}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                    {sub.department}
+                  </p>
                 </div>
 
-                <div className="text-right">
-                  <span className="font-bold text-sm text-white block">
-                    {formatCurrency(sub.normalizedMonthlyCostUSD || sub.cost)}/mo
-                  </span>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-md inline-block mt-0.5 ${
-                    isUrgent
-                      ? 'bg-red-500/20 text-red-300'
-                      : isWarning
-                      ? 'bg-amber-500/20 text-amber-300'
-                      : 'text-gray-400'
-                  }`}>
-                    {daysLeft <= 0 ? 'Renews Today' : `In ${daysLeft} days (${formatDate(sub.nextRenewalDate)})`}
+                <div className="text-right flex-shrink-0">
+                  <p className="text-sm font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                    {formatCurrency(sub.normalizedMonthlyCostUSD || sub.cost)}
+                  </p>
+                  <span
+                    className="text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                    style={{
+                      background: isUrgent ? 'var(--danger-muted)'
+                        : isWarning ? 'var(--warning-muted)'
+                        : 'var(--bg-elevated)',
+                      color: isUrgent ? 'var(--danger)'
+                        : isWarning ? 'var(--warning)'
+                        : 'var(--text-muted)',
+                    }}
+                  >
+                    {daysLeft <= 0 ? 'Today' : `${daysLeft}d`}
                   </span>
                 </div>
               </div>

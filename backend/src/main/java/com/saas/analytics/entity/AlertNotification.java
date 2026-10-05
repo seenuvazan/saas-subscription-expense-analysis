@@ -3,6 +3,7 @@ package com.saas.analytics.entity;
 import com.saas.analytics.model.AlertSeverity;
 import com.saas.analytics.model.AlertType;
 import com.saas.analytics.model.Department;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -43,7 +44,13 @@ public class AlertNotification {
 
     private Long subscriptionId;
 
+    private String vendorName;
+
+    // e.g. "overdue", "1d", "7d", "14d", "30d", "underused", "budget_warning", "budget_critical"
+    private String threshold;
+
     @Builder.Default
+    @JsonProperty("read")
     private Boolean isRead = false;
 
     @Column(nullable = false)
@@ -54,5 +61,16 @@ public class AlertNotification {
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();
         }
+        if (this.isRead == null) {
+            this.isRead = false;
+        }
+    }
+
+    public Boolean getRead() {
+        return isRead;
+    }
+
+    public void setRead(Boolean read) {
+        this.isRead = read;
     }
 }

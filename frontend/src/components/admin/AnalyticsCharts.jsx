@@ -5,7 +5,8 @@ import {
   LineChart, Line
 } from 'recharts';
 
-const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#3b82f6', '#14b8a6', '#64748b'];
+// Colorblind-friendly palette matching CSS --chart-* variables
+const COLORS = ['#3B82F6', '#14B8A6', '#F59E0B', '#8B5CF6', '#64748B', '#EC4899', '#22C55E', '#F97316'];
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -46,7 +47,7 @@ export const DepartmentSpendChart = ({ data = [] }) => {
             <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} tickFormatter={(val) => `$${val}`} />
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-            <Bar dataKey="Actual" fill="#6366f1" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="Actual" fill="#3B82F6" radius={[6, 6, 0, 0]} />
             <Bar dataKey="Budget" fill="#374151" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

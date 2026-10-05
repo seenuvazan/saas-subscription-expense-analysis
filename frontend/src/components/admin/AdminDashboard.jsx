@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import StatCard from '../common/StatCard';
 import AuditSoftwareTable from './AuditSoftwareTable';
+import SubscriptionDrawer from '../common/SubscriptionDrawer';
 import { DepartmentSpendChart, CategorySpendChart, MonthlyTrendChart } from './AnalyticsCharts';
 import BudgetModal from './BudgetModal';
 import { formatCurrency } from '../../utils/formatters';
-import { DollarSign, TrendingUp, AlertTriangle, ShieldCheck, CreditCard, Sparkles, Layers } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertTriangle, ShieldCheck, CreditCard, Layers } from 'lucide-react';
 
 const AdminDashboard = ({ summary, subscriptions = [], onUpdateStatus, onDelete, onRefresh }) => {
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+  const [drawerSub, setDrawerSub] = useState(null);
 
   const totalMRR = summary?.totalMonthlySpendUSD || subscriptions
     .filter(s => s.status !== 'CANCELLED')
@@ -48,24 +50,35 @@ const AdminDashboard = ({ summary, subscriptions = [], onUpdateStatus, onDelete,
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="glass-card p-6 rounded-3xl border border-gray-800 bg-gradient-to-r from-purple-900/30 via-indigo-900/30 to-gray-900 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div
+        className="rounded-2xl border p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+        style={{
+          background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, var(--bg-surface) 60%)',
+          borderColor: 'var(--border)',
+        }}
+      >
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-500/10 border border-purple-500/30 rounded-full text-purple-300 text-xs font-semibold mb-2">
-            <ShieldCheck className="w-3.5 h-3.5" /> Finance Administrator Portal
+          <div
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold mb-2 border"
+            style={{ background: 'var(--accent-muted)', borderColor: 'var(--accent)', color: 'var(--accent)' }}
+          >
+            <ShieldCheck className="w-3 h-3" /> Finance Admin
           </div>
-          <h2 className="text-2xl font-extrabold text-white tracking-tight">
-            Executive SaaS Spend & Waste Analytics
+          <h2 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            SaaS Spend &amp; Waste Analytics
           </h2>
-          <p className="text-xs text-gray-400 mt-1 max-w-2xl leading-relaxed">
-            Organization-wide oversight of software recurring spend, projected ARR, redundant tooling flags, and departmental budget threshold limits.
+          <p className="text-sm mt-1 max-w-2xl" style={{ color: 'var(--text-secondary)' }}>
+            Organization-wide spend, ARR projection, utilization flags, and budget limits.
           </p>
         </div>
-
         <button
           onClick={() => setIsBudgetModalOpen(true)}
-          className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm rounded-2xl shadow-xl hover:scale-105 transition-all glow-purple"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold text-sm transition-colors flex-shrink-0"
+          style={{ background: 'var(--accent)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent-hover)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--accent)'; }}
         >
-          <CreditCard className="w-4 h-4" /> Configure Dept Budgets
+          <CreditCard className="w-4 h-4" /> Configure Budgets
         </button>
       </div>
 
@@ -120,16 +133,25 @@ const AdminDashboard = ({ summary, subscriptions = [], onUpdateStatus, onDelete,
         subscriptions={subscriptions}
         onUpdateStatus={onUpdateStatus}
         onDelete={onDelete}
+        onOpenDrawer={setDrawerSub}
       />
 
       {/* Budget Configuration Modal */}
       <BudgetModal
         isOpen={isBudgetModalOpen}
         onClose={() => setIsBudgetModalOpen(false)}
-        onSuccess={() => {
-          if (onRefresh) onRefresh();
-        }}
+        onSuccess={() => { if (onRefresh) onRefresh(); }}
       />
+
+      {/* Subscription Drawer */}
+      {drawerSub && (
+        <SubscriptionDrawer
+          subscription={drawerSub}
+          onClose={() => setDrawerSub(null)}
+          onUpdateStatus={onUpdateStatus}
+          onDelete={onDelete}
+        />
+      )}
     </div>
   );
 };

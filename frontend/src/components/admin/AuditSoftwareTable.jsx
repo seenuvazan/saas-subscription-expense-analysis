@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import Badge from '../common/Badge';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import VendorLogo from '../common/VendorLogo';
+import { formatCurrency, formatDate, getDaysRemaining } from '../../utils/formatters';
 import { DEPARTMENTS } from '../../utils/constants';
-import { AlertOctagon, Search, Filter, Trash2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { AlertOctagon, Trash2 } from 'lucide-react';
 
 const AuditSoftwareTable = ({ subscriptions = [], onUpdateStatus, onDelete }) => {
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -94,10 +95,14 @@ const AuditSoftwareTable = ({ subscriptions = [], onUpdateStatus, onDelete }) =>
                   ? sub.utilizationRate
                   : (sub.assignedSeats > 0 ? (sub.usedSeats / sub.assignedSeats * 100) : 100);
 
-                return (
+                  const daysLeft = getDaysRemaining(sub.nextRenewalDate);
+                  return (
                   <tr key={sub.id} className="hover:bg-gray-800/40 transition-colors">
-                    <td className="py-3.5 px-5 font-bold text-white flex items-center gap-2">
-                      {sub.vendorName}
+                    <td className="py-3.5 px-5 font-bold text-white">
+                      <div className="flex items-center gap-2.5">
+                        <VendorLogo name={sub.vendorName} size="xs" />
+                        {sub.vendorName}
+                      </div>
                     </td>
                     <td className="py-3.5 px-5 font-medium text-gray-300">{sub.department}</td>
                     <td className="py-3.5 px-5 text-indigo-400 font-medium">{sub.category}</td>
@@ -117,7 +122,7 @@ const AuditSoftwareTable = ({ subscriptions = [], onUpdateStatus, onDelete }) =>
                       </div>
                     </td>
                     <td className="py-3.5 px-5">
-                      <Badge status={sub.status} />
+                      <Badge status={sub.status} daysLeft={daysLeft} />
                     </td>
                     <td className="py-3.5 px-5 text-right space-x-2">
                       {sub.status !== 'CANCELLED' ? (

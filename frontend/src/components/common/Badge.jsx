@@ -1,26 +1,79 @@
 import React from 'react';
 
-const Badge = ({ status }) => {
-  const styles = {
-    ACTIVE: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-    CANCELLED: 'bg-gray-800 text-gray-400 border-gray-700',
-    UNDER_REVIEW: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-    FLAGGED_IDLE: 'bg-amber-500/10 text-amber-400 border-amber-500/30 animate-pulse',
-    FLAGGED_DUPLICATE: 'bg-red-500/10 text-red-400 border-red-500/30',
-  };
+const BADGE_CONFIG = {
+  ACTIVE: {
+    label: 'Active',
+    bg: 'var(--success-muted)',
+    color: 'var(--success)',
+    dot: 'var(--success)',
+  },
+  CANCELLED: {
+    label: 'Cancelled',
+    bg: 'var(--bg-elevated)',
+    color: 'var(--text-muted)',
+    dot: 'var(--text-muted)',
+  },
+  UNDER_REVIEW: {
+    label: 'Under Review',
+    bg: 'var(--accent-muted)',
+    color: 'var(--accent)',
+    dot: 'var(--accent)',
+  },
+  PENDING_APPROVAL: {
+    label: 'Pending Approval',
+    bg: 'var(--accent-muted)',
+    color: 'var(--accent)',
+    dot: 'var(--accent)',
+  },
+  FLAGGED_IDLE: {
+    label: 'Underused',
+    bg: 'var(--warning-muted)',
+    color: 'var(--warning)',
+    dot: 'var(--warning)',
+  },
+  FLAGGED_DUPLICATE: {
+    label: 'Duplicate',
+    bg: 'var(--danger-muted)',
+    color: 'var(--danger)',
+    dot: 'var(--danger)',
+  },
+  EXPIRING_SOON: {
+    label: 'Expiring Soon',
+    bg: 'var(--danger-muted)',
+    color: 'var(--danger)',
+    dot: 'var(--danger)',
+    pulse: true,
+  },
+};
 
-  const labels = {
-    ACTIVE: 'Active',
-    CANCELLED: 'Cancelled',
-    UNDER_REVIEW: 'Under Review',
-    FLAGGED_IDLE: 'Idle Waste',
-    FLAGGED_DUPLICATE: 'Duplicate',
+const Badge = ({ status, daysLeft }) => {
+  // Derive expiring-soon from daysLeft if status is still ACTIVE
+  const effectiveStatus =
+    status === 'ACTIVE' && daysLeft !== undefined && daysLeft <= 7
+      ? 'EXPIRING_SOON'
+      : status;
+
+  const cfg = BADGE_CONFIG[effectiveStatus] || {
+    label: effectiveStatus || 'Unknown',
+    bg: 'var(--bg-elevated)',
+    color: 'var(--text-secondary)',
+    dot: 'var(--text-secondary)',
   };
 
   return (
-    <span className={`px-2.5 py-1 text-xs font-bold rounded-full border inline-flex items-center gap-1.5 ${styles[status] || styles.ACTIVE}`}>
-      <span className="w-1.5 h-1.5 rounded-full bg-current" />
-      {labels[status] || status}
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border"
+      style={{
+        background: cfg.bg,
+        color: cfg.color,
+        borderColor: cfg.color + '33', // 20% opacity border
+      }}
+    >
+      <span
+        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.pulse ? 'animate-pulse' : ''}`}
+        style={{ background: cfg.dot }}
+      />
+      {cfg.label}
     </span>
   );
 };

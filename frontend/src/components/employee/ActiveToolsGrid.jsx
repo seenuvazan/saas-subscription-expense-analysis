@@ -1,89 +1,210 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import VendorLogo from '../common/VendorLogo';
 import Badge from '../common/Badge';
-import { formatCurrency, formatDate } from '../../utils/formatters';
-import { Users, Calendar, Tag, ExternalLink } from 'lucide-react';
+import { formatCurrency, formatDate, getDaysRemaining } from '../../utils/formatters';
+import { Users, Calendar, MoreVertical, Eye, X, RefreshCw } from 'lucide-react';
 
-const ActiveToolsGrid = ({ subscriptions = [], onEditStatus }) => {
+// ── Quick-action menu (three-dot) ───────────────────────────────────────────
+const QuickMenu = ({ sub, onView, onCancel, onActivate, onClose }) => {
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handle = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) onClose(); };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [onClose]);
+
+  const item = (label, icon, color, action) => (
+    <button
+      key={label}
+      onClick={() => { action(); onClose(); }}
+      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors text-left"
+      style={{ color: color || 'var(--text-primary)' }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-elevated)'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+
+  return (
+    <div
+      ref={menuRef}
+      className="absolute top-10 right-2 w-44 rounded-xl border shadow-lg z-30 overflow-hidden animate-scale-in"
+      style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }}
+    >
+      {item('View Details', <Eye className="w-4 h-4" />, null, onView)}
+      {sub.status !== 'CANCELLED'
+        ? item('Cancel', <X className="w-4 h-4" />, 'var(--danger)', onCancel)
+        : item('Reactivate', <RefreshCw className="w-4 h-4" />, 'var(--success)', onActivate)
+      }
+    </div>
+  );
+};
+
+// ── Main grid ───────────────────────────────────────────────────────────────
+const ActiveToolsGrid = ({ subscriptions = [], onEditStatus, onOpenDrawer }) => {
+  const [openMenuId, setOpenMenuId] = useState(null);
+
+  if (subscriptions.length === 0) {
+    return (
+      <div
+        className="rounded-2xl border border-dashed flex flex-col items-center justify-center py-16 text-center"
+        style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+      >
+        <div className="text-4xl mb-3">📋</div>
+        <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>No subscriptions yet</p>
+        <p className="text-xs mt-1">Log your first subscription using the button above.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {subscriptions.map((sub) => {
+      {subscriptions.map(sub => {
         const utilization = sub.utilizationRate !== undefined
           ? sub.utilizationRate
-          : (sub.assignedSeats > 0 ? (sub.usedSeats / sub.assignedSeats * 100) : 100);
+          : (sub.assignedSeats > 0 ? (sub.usedSeats / sub.assignedSeats) * 100 : 100);
+
+        const daysLeft = getDaysRemaining(sub.nextRenewalDate);
+        const isUrgent = daysLeft <= 7;
+        const isWarning = daysLeft <= 14 && !isUrgent;
+
+        const wastePerMonth = utilization < 60
+          ? ((1 - utilization / 100) * Number(sub.normalizedMonthlyCostUSD || sub.cost || 0))
+          : 0;
 
         return (
           <div
             key={sub.id}
-            className="glass-card glass-card-hover p-5 rounded-2xl border border-gray-800 flex flex-col justify-between"
+            className="glass-card glass-card-hover rounded-2xl overflow-hidden flex flex-col cursor-pointer"
+            onClick={() => { if (onOpenDrawer) onOpenDrawer(sub); }}
           >
-            <div>
-              {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h4 className="font-extrabold text-base text-white">{sub.vendorName}</h4>
-                  <span className="text-xs text-indigo-400 font-medium">{sub.category}</span>
+            {/* Category colour strip */}
+            <div className={`h-1.5 w-full cat-strip-${sub.category || 'OTHER'}`} />
+
+            <div className="p-4 flex flex-col gap-3 flex-1">
+              {/* Header row */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-3 min-w-0">
+                  <VendorLogo name={sub.vendorName} size="sm" />
+                  <div className="min-w-0">
+                    <h4
+                      className="font-bold text-sm leading-tight truncate"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {sub.vendorName}
+                    </h4>
+                    <span className={`text-xs font-medium cat-text-${sub.category || 'OTHER'}`}>
+                      {sub.category}
+                    </span>
+                  </div>
                 </div>
-                <Badge status={sub.status} />
+
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Badge status={sub.status} daysLeft={daysLeft} />
+
+                  {/* Three-dot quick-actions */}
+                  <div className="relative" onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => setOpenMenuId(openMenuId === sub.id ? null : sub.id)}
+                      className="p-1 rounded-lg transition-colors"
+                      style={{ color: 'var(--text-muted)' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-elevated)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+
+                    {openMenuId === sub.id && (
+                      <QuickMenu
+                        sub={sub}
+                        onView={() => { if (onOpenDrawer) onOpenDrawer(sub); }}
+                        onCancel={() => { if (onEditStatus) onEditStatus(sub.id, 'CANCELLED'); }}
+                        onActivate={() => { if (onEditStatus) onEditStatus(sub.id, 'ACTIVE'); }}
+                        onClose={() => setOpenMenuId(null)}
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* Cost & Billing */}
-              <div className="my-3 py-3 border-y border-gray-800/80 flex items-baseline justify-between">
+              {/* Cost */}
+              <div
+                className="py-2.5 border-y flex items-baseline justify-between"
+                style={{ borderColor: 'var(--border)' }}
+              >
                 <div>
-                  <span className="text-2xl font-extrabold text-white">
+                  <span
+                    className="text-xl font-extrabold tabular-nums"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
                     {formatCurrency(sub.normalizedMonthlyCostUSD || sub.cost)}
                   </span>
-                  <span className="text-xs text-gray-400 font-medium"> / mo USD</span>
+                  <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>/mo</span>
                 </div>
-                <span className="text-xs font-semibold uppercase px-2 py-0.5 bg-gray-800 text-gray-300 rounded">
+                <span
+                  className="text-xs font-semibold px-2 py-0.5 rounded"
+                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}
+                >
                   {sub.billingFrequency}
                 </span>
               </div>
 
-              {/* Details & Seats */}
-              <div className="space-y-2 text-xs text-gray-400 mb-4">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-gray-500" /> Seats</span>
-                  <span className="font-semibold text-gray-200">{sub.usedSeats} / {sub.assignedSeats} ({Math.round(utilization)}%)</span>
+              {/* Seat utilization */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
+                    <Users className="w-3 h-3" /> {sub.usedSeats}/{sub.assignedSeats} seats
+                  </span>
+                  <span
+                    className="font-semibold tabular-nums"
+                    style={{ color: utilization < 60 ? 'var(--warning)' : 'var(--success)' }}
+                  >
+                    {Math.round(utilization)}%
+                  </span>
                 </div>
-
-                {/* Utilization Progress Bar */}
-                <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                <div
+                  className="w-full h-1.5 rounded-full overflow-hidden"
+                  style={{ background: 'var(--bg-elevated)' }}
+                  title={wastePerMonth > 0 ? `Wasting ~${formatCurrency(wastePerMonth)}/month on unused seats` : undefined}
+                >
                   <div
-                    className={`h-full transition-all ${
-                      utilization < 50 ? 'bg-amber-500' : 'bg-emerald-500'
-                    }`}
-                    style={{ width: `${Math.min(utilization, 100)}%` }}
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${Math.min(utilization, 100)}%`,
+                      background: utilization < 60 ? 'var(--warning)' : 'var(--success)',
+                    }}
                   />
                 </div>
-
-                <div className="flex items-center justify-between pt-1">
-                  <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-500" /> Renewal</span>
-                  <span className="font-medium text-gray-300">{formatDate(sub.nextRenewalDate)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card Action Footer */}
-            {onEditStatus && (
-              <div className="pt-3 border-t border-gray-800/60 flex items-center justify-between">
-                <span className="text-[11px] text-gray-500 font-medium">{sub.department} Dept</span>
-                {sub.status !== 'CANCELLED' ? (
-                  <button
-                    onClick={() => onEditStatus(sub.id, 'CANCELLED')}
-                    className="text-xs text-red-400 hover:text-red-300 hover:underline font-semibold"
-                  >
-                    Cancel Tool
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => onEditStatus(sub.id, 'ACTIVE')}
-                    className="text-xs text-emerald-400 hover:text-emerald-300 hover:underline font-semibold"
-                  >
-                    Reactivate
-                  </button>
+                {wastePerMonth > 0 && (
+                  <p className="text-[11px] font-medium" style={{ color: 'var(--warning)' }}>
+                    ⚠ ~{formatCurrency(wastePerMonth)}/mo wasted
+                  </p>
                 )}
               </div>
-            )}
+
+              {/* Renewal countdown */}
+              <div className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
+                  <Calendar className="w-3 h-3" /> Renewal
+                </span>
+                <span
+                  className="font-semibold px-2 py-0.5 rounded-full"
+                  style={{
+                    background: isUrgent ? 'var(--danger-muted)'
+                      : isWarning ? 'var(--warning-muted)'
+                      : 'var(--bg-elevated)',
+                    color: isUrgent ? 'var(--danger)'
+                      : isWarning ? 'var(--warning)'
+                      : 'var(--text-secondary)',
+                  }}
+                >
+                  {daysLeft <= 0 ? 'Today' : `${daysLeft}d (${formatDate(sub.nextRenewalDate)})`}
+                </span>
+              </div>
+            </div>
           </div>
         );
       })}

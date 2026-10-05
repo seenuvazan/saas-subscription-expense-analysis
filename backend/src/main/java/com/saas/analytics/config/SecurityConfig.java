@@ -38,6 +38,8 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/h2-console/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                // Demo & authenticated endpoints: resolved via JwtAuthenticationFilter
+                .requestMatchers("/api/subscriptions/**", "/api/analytics/**", "/api/alerts/**", "/api/cron/**", "/api/notifications/**", "/api/profile/**", "/api/users/**").permitAll()
                 .requestMatchers("/api/admin/**", "/api/budgets/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()

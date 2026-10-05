@@ -14,6 +14,20 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // Pass current active user details for seamless demo/session alignment
+  try {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      if (user.role) config.headers['X-User-Role'] = user.role;
+      if (user.department) config.headers['X-User-Department'] = user.department;
+      if (user.email) config.headers['X-User-Email'] = user.email;
+    }
+  } catch (e) {
+    // Ignore JSON parse errors
+  }
+
   return config;
 }, (error) => {
   return Promise.reject(error);
@@ -40,10 +54,37 @@ export const analyticsAPI = {
 };
 
 export const alertAPI = {
-  getAll: () => api.get('/alerts'),
-  getUnread: () => api.get('/alerts/unread'),
-  markAsRead: (id) => api.patch(`/alerts/${id}/read`),
-  triggerScan: () => api.post('/alerts/trigger-scan'),
+  getAll: (department) => api.get('/notifications', { params: department ? { department } : {} }),
+  getUnread: (department) => api.get('/notifications', { params: department ? { department } : {} }),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: (department) => api.patch('/notifications/read-all', {}, { params: department ? { department } : {} }),
+  triggerScan: (department) => api.post('/cron/run-check', {}, { params: department ? { department } : {} }),
+};
+
+export const cronAPI = {
+  runCheck: (department) => api.post('/cron/run-check', {}, { params: department ? { department } : {} }),
+  getHistory: () => api.get('/cron/history'),
+};
+
+export const notificationAPI = {
+  getAll: (department) => api.get('/notifications', { params: department ? { department } : {} }),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: (department) => api.patch('/notifications/read-all', {}, { params: department ? { department } : {} }),
+};
+
+export const profileAPI = {
+  getMe: () => api.get('/profile/me'),
+  updateMe: (data) => api.put('/profile/me', data),
+  uploadAvatar: (formData) => api.post('/profile/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  changePassword: (data) => api.put('/profile/password', data),
+};
+
+export const userAPI = {
+  getAll: () => api.get('/users'),
+  getById: (id) => api.get(`/users/${id}`),
+  update: (id, data) => api.put(`/users/${id}`, data),
 };
 
 export const budgetAPI = {

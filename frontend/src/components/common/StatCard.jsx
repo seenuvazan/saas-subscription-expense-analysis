@@ -1,41 +1,63 @@
 import React from 'react';
 
-const StatCard = ({ title, value, subtext, icon: Icon, trend, variant = 'purple' }) => {
-  const glowClasses = {
-    purple: 'hover:border-purple-500/40 hover:shadow-purple-500/10',
-    emerald: 'hover:border-emerald-500/40 hover:shadow-emerald-500/10',
-    amber: 'hover:border-amber-500/40 hover:shadow-amber-500/10',
-    red: 'hover:border-red-500/40 hover:shadow-red-500/10',
-  };
+const VARIANT_STYLES = {
+  blue:    { iconBg: 'var(--accent-muted)',   iconColor: 'var(--accent)',   accent: 'var(--accent)' },
+  purple:  { iconBg: 'rgba(139,92,246,0.12)', iconColor: '#8B5CF6',         accent: '#8B5CF6' },
+  emerald: { iconBg: 'var(--success-muted)',  iconColor: 'var(--success)',  accent: 'var(--success)' },
+  amber:   { iconBg: 'var(--warning-muted)',  iconColor: 'var(--warning)',  accent: 'var(--warning)' },
+  red:     { iconBg: 'var(--danger-muted)',   iconColor: 'var(--danger)',   accent: 'var(--danger)' },
+};
 
-  const iconBgClasses = {
-    purple: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    red: 'bg-red-500/10 text-red-400 border-red-500/20',
-  };
+const StatCard = ({ title, value, subtext, icon: Icon, trend, variant = 'blue' }) => {
+  const v = VARIANT_STYLES[variant] || VARIANT_STYLES.blue;
 
   return (
-    <div className={`glass-card glass-card-hover p-5 rounded-2xl border transition-all duration-300 ${glowClasses[variant] || ''}`}>
+    <div
+      className="glass-card glass-card-hover p-5 rounded-card"
+      style={{ borderLeft: `3px solid ${v.accent}` }}
+    >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{title}</span>
+        <span
+          className="text-xs font-semibold uppercase tracking-wider"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          {title}
+        </span>
         {Icon && (
-          <div className={`p-2.5 rounded-xl border ${iconBgClasses[variant]}`}>
-            <Icon className="w-5 h-5" />
+          <div
+            className="p-2.5 rounded-xl"
+            style={{ background: v.iconBg }}
+          >
+            <Icon className="w-5 h-5" style={{ color: v.iconColor }} />
           </div>
         )}
       </div>
-      <div className="flex items-baseline justify-between">
-        <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{value}</h3>
+
+      <div className="flex items-baseline justify-between gap-2">
+        <h3
+          className="text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {value}
+        </h3>
         {trend && (
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-            trend.startsWith('+') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
-          }`}>
+          <span
+            className="text-xs font-semibold px-2 py-0.5 rounded-full"
+            style={{
+              background: trend.startsWith('+') ? 'var(--success-muted)' : 'var(--danger-muted)',
+              color: trend.startsWith('+') ? 'var(--success)' : 'var(--danger)',
+            }}
+          >
             {trend}
           </span>
         )}
       </div>
-      {subtext && <p className="text-xs text-gray-400 mt-2 font-medium">{subtext}</p>}
+
+      {subtext && (
+        <p className="text-xs mt-2 font-medium" style={{ color: 'var(--text-muted)' }}>
+          {subtext}
+        </p>
+      )}
     </div>
   );
 };

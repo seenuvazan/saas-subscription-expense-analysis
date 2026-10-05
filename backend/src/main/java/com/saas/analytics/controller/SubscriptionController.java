@@ -28,7 +28,7 @@ public class SubscriptionController {
     @PostMapping
     public ResponseEntity<SubscriptionDTO> createSubscription(
             @Valid @RequestBody SubscriptionCreateRequest request,
-            @AuthenticationPrincipal User loggedInUser) {
+            @AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") User loggedInUser) {
         SubscriptionDTO created = subscriptionService.createSubscription(request, loggedInUser);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }

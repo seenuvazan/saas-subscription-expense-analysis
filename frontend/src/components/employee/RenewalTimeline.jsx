@@ -1,6 +1,6 @@
 import React from 'react';
 import VendorLogo from '../common/VendorLogo';
-import { formatDate, getDaysRemaining, formatCurrency } from '../../utils/formatters';
+import { formatDate, getDaysRemaining, formatCurrency, formatINRCompact, USD_TO_INR } from '../../utils/formatters';
 import { Calendar } from 'lucide-react';
 
 const RenewalTimeline = ({ subscriptions = [] }) => {
@@ -64,7 +64,10 @@ const RenewalTimeline = ({ subscriptions = [] }) => {
 
                 <div className="text-right flex-shrink-0">
                   <p className="text-sm font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
-                    {formatCurrency(sub.normalizedMonthlyCostUSD || sub.cost)}
+                    {formatINRCompact((sub.normalizedMonthlyCostUSD || sub.cost) * USD_TO_INR)}
+                  </p>
+                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                    ${Math.round(sub.normalizedMonthlyCostUSD || sub.cost).toLocaleString()}
                   </p>
                   <span
                     className="text-xs font-semibold px-1.5 py-0.5 rounded-full"

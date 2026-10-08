@@ -3,6 +3,39 @@ import { authAPI, profileAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
+// ── Indian demo users ────────────────────────────────────────────────────────
+const DEMO_EMPLOYEE = {
+  id: 2,
+  firstName: 'Arjun',
+  lastName: 'Mehta',
+  fullName: 'Arjun Mehta',
+  email: 'arjun.mehta@techvance.in',
+  jobTitle: 'Senior Software Engineer',
+  department: 'ENGINEERING',
+  role: 'ROLE_EMPLOYEE',
+  employeeId: 'EMP-1042',
+  location: 'Bengaluru, Karnataka',
+  bio: 'Leading core platform engineering and DevOps at Techvance Solutions.',
+  phone: '+91 98765 43210',
+  avatarUrl: null,
+};
+
+const DEMO_ADMIN = {
+  id: 1,
+  firstName: 'Priya',
+  lastName: 'Sharma',
+  fullName: 'Priya Sharma',
+  email: 'priya.sharma@techvance.in',
+  jobTitle: 'Head of Finance & Operations',
+  department: 'FINANCE',
+  role: 'ROLE_ADMIN',
+  employeeId: 'EMP-0018',
+  location: 'Gurugram, Haryana',
+  bio: 'Managing enterprise SaaS governance, budgets and procurement at Techvance Solutions.',
+  phone: '+91 87654 32109',
+  avatarUrl: null,
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
@@ -44,7 +77,7 @@ export const AuthProvider = ({ children }) => {
         if (res.data) {
           setUser(prev => ({ ...prev, ...res.data }));
         }
-      } catch (e) {
+      } catch {
         // Fallback silently if offline or initial load
       }
     };
@@ -70,67 +103,32 @@ export const AuthProvider = ({ children }) => {
       let resData = null;
       let resToken = null;
 
-      // Map demo emails to backend seeded accounts if needed
-      const backendEmail = 
-        roleHint === 'ROLE_EMPLOYEE' || email.includes('alex') || email.includes('engineering') || email.includes('employee')
-          ? 'employee@company.com'
-          : 'admin@company.com';
-      const backendPass = backendEmail === 'admin@company.com' ? 'admin123' : 'password123';
+      const isAdmin =
+        roleHint === 'ROLE_ADMIN' ||
+        email.includes('priya') ||
+        email.includes('finance') ||
+        email.includes('admin');
+
+      const backendEmail = isAdmin ? 'admin@company.com' : 'employee@company.com';
+      const backendPass  = isAdmin ? 'admin123' : 'password123';
 
       try {
-        // First try the actual email provided
         const response = await authAPI.login({ email, password });
         resData = response.data;
         resToken = response.data?.token;
-      } catch (e1) {
+      } catch {
         try {
-          // If custom demo email, fall back to seeded backend credentials
           const response = await authAPI.login({ email: backendEmail, password: backendPass });
           resData = response.data;
           resToken = response.data?.token;
-        } catch (e2) {
-          // Purely offline or mock mode
+        } catch {
+          // Purely offline / mock mode
         }
       }
 
-      const isEmp =
-        roleHint === 'ROLE_EMPLOYEE' ||
-        email.includes('alex') ||
-        email.includes('engineering') ||
-        email.includes('employee');
-
-      const fallbackUser = isEmp
-        ? {
-            id: resData?.id || 2,
-            firstName: 'Alex',
-            lastName: 'Morgan',
-            fullName: resData?.fullName || 'Alex Morgan',
-            email: email || 'alex.morgan@engineering.saasoptima.io',
-            jobTitle: 'Engineering Lead',
-            department: 'ENGINEERING',
-            role: 'ROLE_EMPLOYEE',
-            employeeId: 'EMP-1042',
-            location: 'San Francisco, CA',
-            bio: 'Leading core infrastructure, DevOps, and cloud architecture at SaaSoptima.',
-            avatarUrl: null
-          }
-        : {
-            id: resData?.id || 1,
-            firstName: 'Sarah',
-            lastName: 'Chen',
-            fullName: resData?.fullName || 'Sarah Chen',
-            email: email || 'sarah.chen@finance.saasoptima.io',
-            jobTitle: 'Head of Corporate Finance',
-            department: 'FINANCE',
-            role: 'ROLE_ADMIN',
-            employeeId: 'EMP-0018',
-            location: 'New York, NY',
-            bio: 'Directing global enterprise financial governance, cloud commitments, and SaaS audits.',
-            avatarUrl: null
-          };
-
-      const finalUser = resData && resData.email === email ? resData : fallbackUser;
-      const finalToken = resToken || (isEmp ? 'demo-employee-jwt' : 'demo-admin-jwt');
+      const fallbackUser = isAdmin ? DEMO_ADMIN : DEMO_EMPLOYEE;
+      const finalUser  = (resData && resData.email === email) ? resData : fallbackUser;
+      const finalToken = resToken || (isAdmin ? 'demo-admin-jwt' : 'demo-employee-jwt');
 
       setToken(finalToken);
       setUser(finalUser);
@@ -147,40 +145,16 @@ export const AuthProvider = ({ children }) => {
     if (newRole === 'ROLE_ADMIN') {
       const adminToken = 'demo-admin-jwt';
       setToken(adminToken);
-      const adminUser = {
-        id: 1,
-        firstName: 'Sarah',
-        lastName: 'Chen',
-        fullName: 'Sarah Chen',
-        email: 'sarah.chen@finance.saasoptima.io',
-        jobTitle: 'Head of Corporate Finance',
-        department: 'FINANCE',
-        role: 'ROLE_ADMIN',
-        employeeId: 'EMP-0018',
-        location: 'New York, NY'
-      };
-      setUser(adminUser);
+      setUser(DEMO_ADMIN);
       localStorage.setItem('token', adminToken);
-      localStorage.setItem('user', JSON.stringify(adminUser));
+      localStorage.setItem('user', JSON.stringify(DEMO_ADMIN));
       localStorage.setItem('saasoptima_logged_in', 'true');
     } else {
       const empToken = 'demo-employee-jwt';
       setToken(empToken);
-      const empUser = {
-        id: 2,
-        firstName: 'Alex',
-        lastName: 'Morgan',
-        fullName: 'Alex Morgan',
-        email: 'alex.morgan@engineering.saasoptima.io',
-        jobTitle: 'Engineering Lead',
-        department: 'ENGINEERING',
-        role: 'ROLE_EMPLOYEE',
-        employeeId: 'EMP-1042',
-        location: 'San Francisco, CA'
-      };
-      setUser(empUser);
+      setUser(DEMO_EMPLOYEE);
       localStorage.setItem('token', empToken);
-      localStorage.setItem('user', JSON.stringify(empUser));
+      localStorage.setItem('user', JSON.stringify(DEMO_EMPLOYEE));
       localStorage.setItem('saasoptima_logged_in', 'true');
     }
   };

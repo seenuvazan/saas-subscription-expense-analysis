@@ -1,132 +1,222 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
-  LayoutDashboard, PlusCircle, BarChart3,
-  AlertOctagon, CreditCard, Layers, User, Users, LogOut
+  LayoutDashboard, PlusCircle, BarChart3, AlertOctagon,
+  CreditCard, User, Users, LogOut, Layers, ChevronRight,
+  RefreshCw, FileText, Bell, Settings, Activity, ShieldCheck
 } from 'lucide-react';
 
-const NAV_ITEMS = [
-  { id: 'dashboard',  label: 'Dashboard',         icon: LayoutDashboard, role: 'ALL' },
-  { id: 'log-tool',   label: 'Log Subscription',  icon: PlusCircle,      role: 'ALL' },
-  { id: 'profile',    label: 'My Profile',        icon: User,            role: 'ALL' },
-  { id: 'analytics',  label: 'Analytics',         icon: BarChart3,       role: 'ROLE_ADMIN' },
-  { id: 'audit',      label: 'Idle & Waste Audit', icon: AlertOctagon,    role: 'ROLE_ADMIN', badge: '!' },
-  { id: 'budgets',    label: 'Budgets',            icon: CreditCard,      role: 'ROLE_ADMIN' },
-  { id: 'team',       label: 'Team Members',      icon: Users,           role: 'ROLE_ADMIN' },
+// Navigation groups per spec
+const NAV_GROUPS = [
+  {
+    label: null, // no section label for top-level
+    items: [
+      { id: 'dashboard', label: 'Overview', icon: LayoutDashboard, role: 'ALL' },
+    ],
+  },
+  {
+    label: 'Spend',
+    items: [
+      { id: 'audit',     label: 'Subscriptions', icon: Layers,       role: 'ALL' },
+      { id: 'analytics', label: 'Analytics',     icon: BarChart3,    role: 'ROLE_ADMIN' },
+      { id: 'budgets',   label: 'Budgets',       icon: CreditCard,   role: 'ROLE_ADMIN' },
+      { id: 'savings',   label: 'Savings',       icon: RefreshCw,    role: 'ROLE_ADMIN', badge: 'new' },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { id: 'log-tool',  label: 'Log Request',   icon: PlusCircle,   role: 'ALL' },
+      { id: 'renewals',  label: 'Renewals',      icon: Bell,         role: 'ROLE_ADMIN', badge: '7' },
+      { id: 'invoices',  label: 'Invoices',      icon: FileText,     role: 'ROLE_ADMIN' },
+    ],
+  },
+  {
+    label: 'Governance',
+    items: [
+      { id: 'idle-audit', label: 'License Audit', icon: AlertOctagon, role: 'ROLE_ADMIN', badge: '!' },
+      { id: 'team',       label: 'Team',           icon: Users,        role: 'ROLE_ADMIN' },
+      { id: 'activity',   label: 'Activity Log',   icon: Activity,     role: 'ROLE_ADMIN' },
+    ],
+  },
+  {
+    label: 'Account',
+    items: [
+      { id: 'profile', label: 'My Profile', icon: User, role: 'ALL' },
+    ],
+  },
 ];
 
 const Sidebar = ({ activeTab, setActiveTab }) => {
   const { user, logout } = useAuth();
   const isAdmin = user?.role === 'ROLE_ADMIN';
-  const displayName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user?.fullName?.split(' (')[0] || 'User');
-  const initials = (user?.firstName?.[0] || user?.fullName?.[0] || 'U').toUpperCase();
+  const displayName = user?.firstName
+    ? `${user.firstName} ${user.lastName || ''}`.trim()
+    : (user?.fullName?.split(' (')[0] || 'User');
+  const initials = (user?.firstName?.[0] || user?.fullName?.[0] || 'U').toUpperCase() +
+    (user?.lastName?.[0] || '').toUpperCase();
 
   return (
     <aside
-      className="hidden md:flex flex-col w-60 min-h-screen border-r flex-shrink-0"
-      style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }}
+      className="hidden md:flex flex-col w-56 min-h-screen flex-shrink-0 overflow-y-auto"
+      style={{ background: 'var(--sidebar-bg)', borderRight: '1px solid var(--sidebar-border)' }}
     >
       {/* Brand */}
-      <div className="px-5 py-5 border-b flex items-center gap-3" style={{ borderColor: 'var(--border)' }}>
+      <div
+        className="px-4 py-5 flex items-center gap-2.5"
+        style={{ borderBottom: '1px solid var(--sidebar-border)' }}
+      >
         <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-          style={{ background: 'var(--accent)' }}
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: '#3157D5' }}
         >
-          <Layers className="text-white" style={{ width: 18, height: 18 }} />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="8" height="8" rx="2" fill="white"/>
+            <rect x="13" y="3" width="8" height="8" rx="2" fill="white" fillOpacity="0.6"/>
+            <rect x="3" y="13" width="8" height="8" rx="2" fill="white" fillOpacity="0.6"/>
+            <rect x="13" y="13" width="8" height="8" rx="2" fill="white"/>
+          </svg>
         </div>
         <div>
-          <h1 className="font-extrabold text-sm tracking-tight leading-tight" style={{ color: 'var(--text-primary)' }}>
-            SaaS<span style={{ color: 'var(--accent)' }}>Optima</span>
+          <h1
+            className="font-bold text-sm leading-tight"
+            style={{ color: '#F9FAFB', letterSpacing: '-0.02em' }}
+          >
+            SaaSOptima
           </h1>
-          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-            Expense Analytics
+          <p className="text-xs" style={{ color: 'var(--sidebar-muted)' }}>
+            Techvance Solutions
           </p>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
-        <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-          Main Menu
-        </p>
-        {NAV_ITEMS
-          .filter(item => item.role === 'ALL' || (item.role === 'ROLE_ADMIN' && isAdmin))
-          .map(item => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                id={`sidebar-nav-${item.id}`}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all relative group text-left"
-                style={{
-                  background: isActive ? 'var(--accent-muted)' : 'transparent',
-                  color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
-                  borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
-                }}
-                onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--text-primary)'; } }}
-                onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; } }}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Icon className="w-4 h-4 flex-shrink-0" />
-                  <span>{item.label}</span>
-                </div>
-                {item.badge && (
-                  <span
-                    className="w-4 h-4 text-[9px] font-black rounded-full flex items-center justify-center"
-                    style={{ background: 'var(--warning)', color: '#000' }}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+      <nav className="flex-1 px-2 py-3 overflow-y-auto">
+        {NAV_GROUPS.map((group) => {
+          const visibleItems = group.items.filter(
+            item => item.role === 'ALL' || (item.role === 'ROLE_ADMIN' && isAdmin)
+          );
+          if (visibleItems.length === 0) return null;
+
+          return (
+            <div key={group.label || 'main'} className="mb-4">
+              {group.label && (
+                <p
+                  className="px-2 mb-1 text-[10px] font-semibold uppercase tracking-widest"
+                  style={{ color: 'var(--sidebar-muted)' }}
+                >
+                  {group.label}
+                </p>
+              )}
+              <div className="space-y-0.5">
+                {visibleItems.map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      id={`sidebar-nav-${item.id}`}
+                      aria-current={isActive ? 'page' : undefined}
+                      className="sidebar-link"
+                      style={{
+                        background: isActive ? 'var(--sidebar-active-bg)' : 'transparent',
+                        color: isActive ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)',
+                      }}
+                      onMouseEnter={e => {
+                        if (!isActive) {
+                          e.currentTarget.style.background = 'var(--sidebar-hover-bg)';
+                          e.currentTarget.style.color = 'white';
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (!isActive) {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = 'var(--sidebar-text)';
+                        }
+                      }}
+                    >
+                      <Icon
+                        className="w-4 h-4 flex-shrink-0"
+                        style={{ opacity: isActive ? 1 : 0.7 }}
+                      />
+                      <span className="flex-1 text-left">{item.label}</span>
+                      {item.badge && (
+                        <span
+                          className="text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none"
+                          style={{
+                            background: item.badge === '!'
+                              ? 'rgba(217,119,6,0.25)'
+                              : item.badge === 'new'
+                              ? 'rgba(22,134,92,0.25)'
+                              : 'rgba(49,87,213,0.3)',
+                            color: item.badge === '!'
+                              ? '#FBBF24'
+                              : item.badge === 'new'
+                              ? '#6EE7B7'
+                              : 'white',
+                          }}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </nav>
 
-      {/* User card with profile link & Sign Out */}
-      <div className="px-3 pb-4 border-t pt-4 flex items-center gap-1.5" style={{ borderColor: 'var(--border)' }}>
+      {/* User footer */}
+      <div
+        className="px-2 pb-3 pt-2"
+        style={{ borderTop: '1px solid var(--sidebar-border)' }}
+      >
         <button
           onClick={() => setActiveTab('profile')}
-          title="Click to view and edit your profile"
-          className="flex-1 flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all text-left group hover:opacity-90 min-w-0"
+          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all text-left mb-0.5"
           style={{
-            background: activeTab === 'profile' ? 'var(--accent-muted)' : 'var(--bg-elevated)',
-            border: activeTab === 'profile' ? '1px solid var(--accent)' : '1px solid transparent'
+            background: activeTab === 'profile' ? 'var(--sidebar-active-bg)' : 'transparent',
+          }}
+          onMouseEnter={e => {
+            if (activeTab !== 'profile') e.currentTarget.style.background = 'var(--sidebar-hover-bg)';
+          }}
+          onMouseLeave={e => {
+            if (activeTab !== 'profile') e.currentTarget.style.background = 'transparent';
           }}
         >
-          {user?.avatarUrl ? (
-            <img
-              src={user.avatarUrl}
-              alt={displayName}
-              className="w-8 h-8 rounded-full object-cover border flex-shrink-0"
-              style={{ borderColor: 'var(--border)' }}
-            />
-          ) : (
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-              style={{ background: 'var(--accent)' }}
-            >
-              {initials}
-            </div>
-          )}
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+            style={{ background: '#3157D5', fontSize: '10px' }}
+          >
+            {initials}
+          </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold truncate group-hover:underline" style={{ color: 'var(--text-primary)' }}>
+            <p
+              className="text-xs font-semibold truncate leading-tight"
+              style={{ color: '#F9FAFB' }}
+            >
               {displayName}
             </p>
-            <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>
-              {isAdmin ? 'Finance Admin' : (user?.jobTitle || 'Employee')} · {user?.department}
+            <p className="text-[10px] truncate leading-tight" style={{ color: 'var(--sidebar-muted)' }}>
+              {isAdmin ? 'Finance Admin' : (user?.jobTitle || 'Employee')}
             </p>
           </div>
+          <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--sidebar-muted)', opacity: 0.6 }} />
         </button>
 
         <button
           onClick={() => logout()}
-          title="Sign Out / Switch Persona"
-          className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all flex-shrink-0"
+          title="Sign Out"
+          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all"
+          style={{ color: 'var(--sidebar-muted)' }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#F87171'; e.currentTarget.style.background = 'rgba(248,113,113,0.08)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--sidebar-muted)'; e.currentTarget.style.background = 'transparent'; }}
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
+          <span>Sign out</span>
         </button>
       </div>
     </aside>

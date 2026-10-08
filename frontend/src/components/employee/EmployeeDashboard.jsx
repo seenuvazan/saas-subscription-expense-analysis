@@ -5,8 +5,8 @@ import ActiveToolsGrid from './ActiveToolsGrid';
 import LogSubscriptionModal from './LogSubscriptionModal';
 import SubscriptionDrawer from '../common/SubscriptionDrawer';
 import { useAuth } from '../../context/AuthContext';
-import { formatCurrency, getDaysRemaining } from '../../utils/formatters';
-import { PlusCircle, Layers, DollarSign, Calendar } from 'lucide-react';
+import { formatCurrency, getDaysRemaining, formatINRCompact, USD_TO_INR } from '../../utils/formatters';
+import { PlusCircle, Layers, IndianRupee, Calendar } from 'lucide-react';
 
 // ── Abstract SVG hero pattern ────────────────────────────────────────────────
 const HeroPattern = () => (
@@ -101,9 +101,9 @@ const EmployeeDashboard = ({ subscriptions = [], onRefresh, onError }) => {
         />
         <StatCard
           title="Monthly Dept Spend"
-          value={formatCurrency(totalSpend)}
-          subtext="Normalized USD"
-          icon={DollarSign}
+          value={formatINRCompact(totalSpend * USD_TO_INR)}
+          subtext={`≈ $${Math.round(totalSpend).toLocaleString()} USD/mo`}
+          icon={IndianRupee}
           variant="emerald"
         />
         <StatCard

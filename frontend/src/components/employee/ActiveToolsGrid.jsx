@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import VendorLogo from '../common/VendorLogo';
 import Badge from '../common/Badge';
-import { formatCurrency, formatDate, getDaysRemaining } from '../../utils/formatters';
+import { formatCurrency, formatDate, getDaysRemaining, formatINRCompact, USD_TO_INR } from '../../utils/formatters';
 import { Users, Calendar, MoreVertical, Eye, X, RefreshCw } from 'lucide-react';
 
 // ── Quick-action menu (three-dot) ───────────────────────────────────────────
@@ -140,9 +140,12 @@ const ActiveToolsGrid = ({ subscriptions = [], onEditStatus, onOpenDrawer }) => 
                     className="text-xl font-extrabold tabular-nums"
                     style={{ color: 'var(--text-primary)' }}
                   >
-                    {formatCurrency(sub.normalizedMonthlyCostUSD || sub.cost)}
+                    {formatINRCompact((sub.normalizedMonthlyCostUSD || sub.cost) * USD_TO_INR)}
                   </span>
                   <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>/mo</span>
+                  <span className="text-[11px] block mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                    ${Math.round(sub.normalizedMonthlyCostUSD || sub.cost).toLocaleString()} USD
+                  </span>
                 </div>
                 <span
                   className="text-xs font-semibold px-2 py-0.5 rounded"
@@ -168,7 +171,7 @@ const ActiveToolsGrid = ({ subscriptions = [], onEditStatus, onOpenDrawer }) => 
                 <div
                   className="w-full h-1.5 rounded-full overflow-hidden"
                   style={{ background: 'var(--bg-elevated)' }}
-                  title={wastePerMonth > 0 ? `Wasting ~${formatCurrency(wastePerMonth)}/month on unused seats` : undefined}
+                  title={wastePerMonth > 0 ? `Wasting ~${formatINRCompact(wastePerMonth * USD_TO_INR)}/month on unused seats` : undefined}
                 >
                   <div
                     className="h-full rounded-full transition-all"
@@ -180,7 +183,7 @@ const ActiveToolsGrid = ({ subscriptions = [], onEditStatus, onOpenDrawer }) => 
                 </div>
                 {wastePerMonth > 0 && (
                   <p className="text-[11px] font-medium" style={{ color: 'var(--warning)' }}>
-                    ⚠ ~{formatCurrency(wastePerMonth)}/mo wasted
+                    ⚠ ~{formatINRCompact(wastePerMonth * USD_TO_INR)}/mo wasted
                   </p>
                 )}
               </div>

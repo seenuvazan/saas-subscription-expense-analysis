@@ -315,7 +315,7 @@ export default function LandingPage({ onLoginSuccess, initialMode = 'landing' })
 
   const handleDemoLogin = (type) => {
     const isAdmin = type === 'admin';
-    const demoEmail = isAdmin ? 'priya.sharma@techvance.in' : 'arjun.mehta@techvance.in';
+    const demoEmail = isAdmin ? 'admin@company.com' : 'employee@company.com';
     const demoPass  = isAdmin ? 'admin123' : 'password123';
     performLogin(demoEmail, demoPass, isAdmin);
   };
@@ -569,14 +569,14 @@ export default function LandingPage({ onLoginSuccess, initialMode = 'landing' })
                     onClick={() => handleDemoLogin('employee')}
                     className="py-1 px-2 rounded-lg text-[11px] font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all truncate border border-blue-200/50"
                   >
-                    Arjun Mehta (Employee)
+                    Alex Morgan (Employee)
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDemoLogin('admin')}
                     className="py-1 px-2 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all truncate border border-emerald-200/50"
                   >
-                    Priya Sharma (Admin)
+                    Sarah Jenkins (Admin)
                   </button>
                 </div>
               </div>

@@ -7,7 +7,7 @@ spring:
   application:
     name: saas-analytics-dashboard
   datasource:
-    url: jdbc:h2:mem:saasdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:file:./data/saasdb;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE
     driverClassName: org.h2.Driver
     username: sa
     password: 
@@ -29,7 +29,11 @@ spring:
 app:
   jwt:
     secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-    expiration-ms: 86400000 # 24 Hours
+    expiration-ms: 86400000 # 24 Hours standard
+
+resend:
+  api-key: ${RESEND_API_KEY:re_default_placeholder}
+  from-email: ${RESEND_FROM_EMAIL:SaaSOptima <onboarding@resend.dev>}
 
 logging:
   level:

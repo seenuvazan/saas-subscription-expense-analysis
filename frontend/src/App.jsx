@@ -10,16 +10,20 @@ import AuditSoftwareTable from './components/admin/AuditSoftwareTable';
 import BudgetModal from './components/admin/BudgetModal';
 import Toast from './components/common/Toast';
 import SubscriptionDrawer from './components/common/SubscriptionDrawer';
-import { DepartmentSpendChart, CategorySpendChart } from './components/admin/AnalyticsCharts';
+import { DepartmentSpendChart, CategorySpendChart, MonthlyTrendChart } from './components/admin/AnalyticsCharts';
 import UserProfile from './components/profile/UserProfile';
 import TeamMembers from './components/admin/TeamMembers';
 import AuthScreen from './components/auth/AuthScreen';
+import LandingPage from './components/landing/LandingPage';
+import AIUsagePage from './components/admin/AIUsagePage';
+import InvoicesPage from './components/admin/InvoicesPage';
 import { subscriptionAPI, analyticsAPI } from './services/api';
 import { USD_TO_INR, formatINRCompact } from './utils/formatters';
 
 // ---------------------------------------------------------------------------
-// Indian company demo data — Techvance Solutions, Bengaluru
-// All USD costs × 84.5 = INR equivalent. Numbers are internally consistent.
+// DEMO FALLBACK DATA — shown only when backend is unreachable.
+// These are representative subscriptions to showcase the interface.
+// Real users will see only their own organization's subscriptions from the backend.
 // ---------------------------------------------------------------------------
 const today = new Date();
 const daysOut = (n) => new Date(today.getTime() + n * 86400000).toISOString().split('T')[0];
@@ -175,7 +179,7 @@ let _backendAvailable = true;
 const MainApp = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [subscriptions, setSubscriptions] = useState(MOCK_SUBSCRIPTIONS);
+  const [subscriptions, setSubscriptions] = useState([]);
   const [summary, setSummary] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
@@ -197,10 +201,7 @@ const MainApp = () => {
         _backendAvailable = true;
       }
     } catch {
-      if (_backendAvailable) {
-        console.info('Backend unavailable — showing mock data.');
-        _backendAvailable = false;
-      }
+      // Keep real user state
     }
   }, []);
 
@@ -214,7 +215,7 @@ const MainApp = () => {
   useEffect(() => {
     fetchSubscriptions();
     fetchSummary();
-  }, [fetchSubscriptions, fetchSummary]);
+  }, [user, fetchSubscriptions, fetchSummary]);
 
   // ── Callbacks ──────────────────────────────────────────────────────────────
   const handleSubscriptionSuccess = useCallback(async () => {
@@ -255,12 +256,27 @@ const MainApp = () => {
 
   // ── Handle new sidebar routes ───────────────────────────────────────────────
   const handleSetActiveTab = (tab) => {
-    // Map new sidebar routes to existing or placeholder views
     setActiveTab(tab);
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Auth state: show landing page or auth screen ─────────────────────────────
   if (!user) {
+    // Check if URL has a specific auth mode hint
+    const authMode = window.__authMode || 'login';
+    if (authMode === 'landing') {
+      return (
+        <>
+          <LandingPage
+            onLoginSuccess={(loggedInUser) => {
+              const name = loggedInUser.firstName || loggedInUser.fullName?.split(' ')[0] || 'there';
+              showSuccess(`Welcome back, ${name}!`);
+              setActiveTab('dashboard');
+            }}
+          />
+          <Toast toast={toast} onClose={closeToast} />
+        </>
+      );
+    }
     return (
       <>
         <AuthScreen
@@ -346,17 +362,24 @@ const MainApp = () => {
           {activeTab === 'analytics' && (
             <div className="space-y-6">
               <div className="page-header">
-                <h2 className="page-title">Analytics & Spend Distribution</h2>
+                <h2 className="page-title">Analytics &amp; Spend Distribution</h2>
                 <p className="page-subtitle">
-                  Department breakdowns, category distribution and monthly trends.
+                  Department breakdowns, category distribution and monthly SaaS spend trends.
                 </p>
               </div>
+              <MonthlyTrendChart />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <DepartmentSpendChart data={summary?.departmentSpend} />
                 <CategorySpendChart data={summary?.categorySpend} />
               </div>
             </div>
           )}
+
+          {/* AI Usage & Costs */}
+          {activeTab === 'ai-usage' && (
+            <AIUsagePage subscriptions={filteredSubscriptions} />
+          )}
+
 
           {/* Subscriptions / Audit table */}
           {activeTab === 'audit' && (
@@ -416,13 +439,9 @@ const MainApp = () => {
             <RenewalsPage subscriptions={filteredSubscriptions} />
           )}
 
-          {/* Invoices placeholder */}
+          {/* Invoices & Payments */}
           {activeTab === 'invoices' && (
-            <PlaceholderPage
-              title="Invoices & Payments"
-              description="Track vendor invoices, GST details, payment status and overdue bills."
-              icon="📄"
-            />
+            <InvoicesPage />
           )}
 
           {/* Activity Log placeholder */}

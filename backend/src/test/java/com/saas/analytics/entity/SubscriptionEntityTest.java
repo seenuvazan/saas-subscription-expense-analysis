@@ -7,7 +7,7 @@ class SubscriptionEntityTest {
     @Test
     void testSubscriptionEntityFields() {
         Subscription sub = new Subscription();
-        sub.setSoftwareName("Slack");
-        assertEquals("Slack", sub.getSoftwareName());
+        sub.setVendorName("Slack");
+        assertEquals("Slack", sub.getVendorName());
     }
 }

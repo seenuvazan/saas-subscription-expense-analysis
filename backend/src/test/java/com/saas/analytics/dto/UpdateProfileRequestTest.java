@@ -7,7 +7,9 @@ class UpdateProfileRequestTest {
     @Test
     void testUpdateProfileRequest() {
         UpdateProfileRequest req = new UpdateProfileRequest();
-        req.setName("Bob Smith");
-        assertEquals("Bob Smith", req.getName());
+        req.setFirstName("Bob");
+        req.setLastName("Smith");
+        assertEquals("Bob", req.getFirstName());
+        assertEquals("Smith", req.getLastName());
     }
 }

@@ -575,30 +575,6 @@ const Navbar = ({
                     </button>
                   )}
 
-                  {/* Switch role (demo convenience) */}
-                  <div className="my-1 mx-1" style={{ height: '1px', background: 'var(--border)' }} />
-                  <div className="px-3 py-1.5">
-                    <p className="text-[10px] font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>Switch demo role</p>
-                    <div
-                      className="flex rounded-lg overflow-hidden border"
-                      style={{ borderColor: 'var(--border)' }}
-                    >
-                      {['ROLE_EMPLOYEE', 'ROLE_ADMIN'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => { switchRole(role); setShowProfileMenu(false); }}
-                          className="flex-1 py-1 text-[10px] font-medium transition-colors"
-                          style={{
-                            background: user?.role === role ? 'var(--accent)' : 'var(--bg-elevated)',
-                            color: user?.role === role ? '#fff' : 'var(--text-secondary)',
-                          }}
-                        >
-                          {role === 'ROLE_EMPLOYEE' ? 'Employee' : 'Admin'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
                   <div className="my-1 mx-1" style={{ height: '1px', background: 'var(--border)' }} />
                   <button
                     onClick={() => { setShowProfileMenu(false); logout(); if (showToast) showToast('Signed out successfully'); }}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import AuditSoftwareTable from './AuditSoftwareTable';
 import SubscriptionDrawer from '../common/SubscriptionDrawer';
 import { DepartmentSpendChart, CategorySpendChart, MonthlyTrendChart } from './AnalyticsCharts';
@@ -197,6 +198,9 @@ const AdminDashboard = ({
     },
   ];
 
+  const { user } = useAuth();
+  const displayName = user?.firstName || user?.fullName?.split(' (')[0]?.split(' ')[0] || user?.username || 'Admin';
+
   // Today's greeting
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -208,7 +212,7 @@ const AdminDashboard = ({
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-            {greeting}, Priya
+            {greeting}, {displayName}
           </h2>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
             Here's where your software spend stands today.

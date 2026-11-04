@@ -8,10 +8,10 @@ class AnalyticsSummaryDTOTest {
     @Test
     void testAnalyticsSummaryDto() {
         AnalyticsSummaryDTO dto = new AnalyticsSummaryDTO();
-        dto.setTotalMonthlySpend(new BigDecimal("12500.00"));
-        dto.setActiveSubscriptionsCount(15);
+        dto.setTotalMonthlySpendUSD(new BigDecimal("12500.00"));
+        dto.setActiveSubscriptionsCount(15L);
 
-        assertEquals(new BigDecimal("12500.00"), dto.getTotalMonthlySpend());
-        assertEquals(15, dto.getActiveSubscriptionsCount());
+        assertEquals(new BigDecimal("12500.00"), dto.getTotalMonthlySpendUSD());
+        assertEquals(15L, dto.getActiveSubscriptionsCount());
     }
 }

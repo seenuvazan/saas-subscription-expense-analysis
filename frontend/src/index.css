@@ -619,11 +619,31 @@ select.input {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Infinite Horizontal Ticker
+   Infinite Horizontal Tickers & Marquees
    ═══════════════════════════════════════════════════════════════════════════ */
 @keyframes infinite-ticker {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-ltr {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes radar-sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes radar-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.15); opacity: 0.4; }
+}
+
+@keyframes subtle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
 .animate-infinite-ticker {
@@ -633,7 +653,44 @@ select.input {
   will-change: transform;
 }
 
-.animate-infinite-ticker:hover {
+.animate-marquee-ltr {
+  display: flex;
+  width: max-content;
+  animation: marquee-ltr 32s linear infinite;
+  will-change: transform;
+}
+
+.animate-radar-sweep {
+  transform-origin: center center;
+  animation: radar-sweep 8s linear infinite;
+  will-change: transform;
+}
+
+.animate-radar-pulse {
+  animation: radar-pulse 2.4s ease-in-out infinite;
+}
+
+.animate-subtle-float {
+  animation: subtle-float 4s ease-in-out infinite;
+}
+
+.marquee-container:hover .animate-marquee-ltr,
+.marquee-container:hover .animate-infinite-ticker {
   animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-ltr,
+  .animate-infinite-ticker,
+  .animate-radar-sweep,
+  .animate-radar-pulse,
+  .animate-subtle-float {
+    animation: none !important;
+  }
+}
+
+.mask-radial-edges {
+  mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
 }
 

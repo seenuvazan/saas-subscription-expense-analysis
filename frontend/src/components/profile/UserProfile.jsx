@@ -109,17 +109,17 @@ const UserProfile = ({ targetUserId = null, onBack, showToast }) => {
         if (!isEditingOtherUser && currentUser) {
           const [first, ...rest] = (currentUser.fullName || '').split(' ');
           const data = {
-            firstName: currentUser.firstName || first || 'Alex',
-            lastName: currentUser.lastName || rest.join(' ') || 'Morgan',
+            firstName: currentUser.firstName || first || '',
+            lastName: currentUser.lastName || rest.join(' ') || '',
             email: currentUser.email || '',
-            phone: currentUser.phone || '+1 (555) 234-5678',
-            dateOfBirth: currentUser.dateOfBirth || '1992-04-15',
-            gender: currentUser.gender || 'MALE',
-            jobTitle: currentUser.jobTitle || 'Engineering Lead',
+            phone: currentUser.phone || '',
+            dateOfBirth: currentUser.dateOfBirth || '',
+            gender: currentUser.gender || '',
+            jobTitle: currentUser.jobTitle || (currentUser.role === 'ROLE_ADMIN' ? 'Finance Admin' : 'Employee'),
             department: currentUser.department || 'ENGINEERING',
-            employeeId: currentUser.employeeId || 'EMP-1042',
-            location: currentUser.location || 'San Francisco, CA',
-            bio: currentUser.bio || 'Leading core cloud infrastructure and software architecture.',
+            employeeId: currentUser.employeeId || (currentUser.id ? `EMP-${1000 + Number(currentUser.id)}` : ''),
+            location: currentUser.location || '',
+            bio: currentUser.bio || '',
             avatarUrl: currentUser.avatarUrl || '',
             role: currentUser.role || 'ROLE_EMPLOYEE',
           };

@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard, PlusCircle, BarChart3, AlertOctagon,
   CreditCard, User, Users, LogOut, Layers, ChevronRight,
-  RefreshCw, FileText, Bell, Settings, Activity, ShieldCheck
+  RefreshCw, FileText, Bell, Settings, Activity, Bot
 } from 'lucide-react';
 
 // Navigation groups per spec
@@ -32,11 +32,12 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: 'Governance',
+    label: 'Intelligence',
     items: [
-      { id: 'idle-audit', label: 'License Audit', icon: AlertOctagon, role: 'ROLE_ADMIN', badge: '!' },
-      { id: 'team',       label: 'Team',           icon: Users,        role: 'ROLE_ADMIN' },
-      { id: 'activity',   label: 'Activity Log',   icon: Activity,     role: 'ROLE_ADMIN' },
+      { id: 'ai-usage',   label: 'AI Usage & Costs', icon: Bot,         role: 'ROLE_ADMIN', badge: 'new' },
+      { id: 'idle-audit', label: 'License Audit',    icon: AlertOctagon, role: 'ROLE_ADMIN', badge: '!' },
+      { id: 'team',       label: 'Team',              icon: Users,        role: 'ROLE_ADMIN' },
+      { id: 'activity',   label: 'Activity Log',      icon: Activity,     role: 'ROLE_ADMIN' },
     ],
   },
   {
@@ -46,6 +47,7 @@ const NAV_GROUPS = [
     ],
   },
 ];
+
 
 const Sidebar = ({ activeTab, setActiveTab }) => {
   const { user, logout } = useAuth();
@@ -85,7 +87,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
             SaaSOptima
           </h1>
           <p className="text-xs" style={{ color: 'var(--sidebar-muted)' }}>
-            Techvance Solutions
+            {user?.email ? user.email.split('@')[1]?.split('.')[0]?.charAt(0).toUpperCase() + user.email.split('@')[1]?.split('.')[0]?.slice(1) + ' Workspace' : 'Workspace'}
           </p>
         </div>
       </div>

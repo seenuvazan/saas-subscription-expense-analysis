@@ -13,6 +13,7 @@ public final class ExpenseCalculator {
 
         switch (frequency) {
             case ANNUALLY:
+            case ANNUAL:
                 return amount.divide(new BigDecimal("12"), 2, RoundingMode.HALF_UP);
             case QUARTERLY:
                 return amount.divide(new BigDecimal("3"), 2, RoundingMode.HALF_UP);
@@ -32,6 +33,7 @@ public final class ExpenseCalculator {
             case QUARTERLY:
                 return amount.multiply(new BigDecimal("4"));
             case ANNUALLY:
+            case ANNUAL:
             default:
                 return amount;
         }

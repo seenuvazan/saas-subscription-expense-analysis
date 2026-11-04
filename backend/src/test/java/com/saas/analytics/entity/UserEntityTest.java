@@ -7,9 +7,9 @@ class UserEntityTest {
     @Test
     void testUserEntity() {
         User user = new User();
-        user.setName("John Doe");
+        user.setFullName("John Doe");
         user.setEmail("john@company.com");
-        assertEquals("John Doe", user.getName());
+        assertEquals("John Doe", user.getFullName());
         assertEquals("john@company.com", user.getEmail());
     }
 }

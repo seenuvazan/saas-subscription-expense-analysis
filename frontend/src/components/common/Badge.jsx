@@ -15,3 +15,5 @@ export function Badge({ children, variant = 'default', size = 'sm' }) {
     </span>
   );
 }
+
+export default Badge;

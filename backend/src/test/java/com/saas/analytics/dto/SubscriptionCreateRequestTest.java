@@ -8,10 +8,10 @@ class SubscriptionCreateRequestTest {
     @Test
     void testSubscriptionCreationDto() {
         SubscriptionCreateRequest req = new SubscriptionCreateRequest();
-        req.setSoftwareName("Figma");
+        req.setVendorName("Figma");
         req.setCost(new BigDecimal("15.00"));
 
-        assertEquals("Figma", req.getSoftwareName());
+        assertEquals("Figma", req.getVendorName());
         assertEquals(new BigDecimal("15.00"), req.getCost());
     }
 }

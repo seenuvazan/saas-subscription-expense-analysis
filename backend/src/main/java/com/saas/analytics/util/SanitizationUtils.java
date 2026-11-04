@@ -8,7 +8,7 @@ public final class SanitizationUtils {
         return input.trim()
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
-                .replace(""", "&quot;")
+                .replace("\"", "&quot;")
                 .replace("'", "&#x27;");
     }
 }

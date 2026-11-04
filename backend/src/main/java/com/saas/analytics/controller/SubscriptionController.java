@@ -38,33 +38,40 @@ public class SubscriptionController {
             @RequestParam(required = false) Department department,
             @RequestParam(required = false) Category category,
             @RequestParam(required = false) SubscriptionStatus status,
-            @RequestParam(required = false) String search) {
-        return ResponseEntity.ok(subscriptionService.getAllSubscriptions(department, category, status, search));
+            @RequestParam(required = false) String search,
+            @AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") User loggedInUser) {
+        return ResponseEntity.ok(subscriptionService.getAllSubscriptions(loggedInUser, department, category, status, search));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SubscriptionDTO> getSubscriptionById(@PathVariable Long id) {
-        return ResponseEntity.ok(subscriptionService.getSubscriptionById(id));
+    public ResponseEntity<SubscriptionDTO> getSubscriptionById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") User loggedInUser) {
+        return ResponseEntity.ok(subscriptionService.getSubscriptionById(id, loggedInUser));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<SubscriptionDTO> updateSubscription(
             @PathVariable Long id,
-            @Valid @RequestBody SubscriptionCreateRequest request) {
-        return ResponseEntity.ok(subscriptionService.updateSubscription(id, request));
+            @Valid @RequestBody SubscriptionCreateRequest request,
+            @AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") User loggedInUser) {
+        return ResponseEntity.ok(subscriptionService.updateSubscription(id, request, loggedInUser));
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<SubscriptionDTO> updateStatus(
             @PathVariable Long id,
-            @RequestBody Map<String, String> statusBody) {
+            @RequestBody Map<String, String> statusBody,
+            @AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") User loggedInUser) {
         SubscriptionStatus newStatus = SubscriptionStatus.valueOf(statusBody.get("status").toUpperCase());
-        return ResponseEntity.ok(subscriptionService.updateSubscriptionStatus(id, newStatus));
+        return ResponseEntity.ok(subscriptionService.updateSubscriptionStatus(id, newStatus, loggedInUser));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSubscription(@PathVariable Long id) {
-        subscriptionService.deleteSubscription(id);
+    public ResponseEntity<Void> deleteSubscription(
+            @PathVariable Long id,
+            @AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") User loggedInUser) {
+        subscriptionService.deleteSubscription(id, loggedInUser);
         return ResponseEntity.noContent().build();
     }
 }

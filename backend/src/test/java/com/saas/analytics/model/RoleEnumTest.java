@@ -7,7 +7,7 @@ class RoleEnumTest {
     @Test
     void testRoleValues() {
         assertEquals(2, Role.values().length);
-        assertNotNull(Role.valueOf("ADMIN"));
-        assertNotNull(Role.valueOf("EMPLOYEE"));
+        assertNotNull(Role.valueOf("ROLE_ADMIN"));
+        assertNotNull(Role.valueOf("ROLE_EMPLOYEE"));
     }
 }

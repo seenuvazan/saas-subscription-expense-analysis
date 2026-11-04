@@ -76,8 +76,17 @@ public class SubscriptionService {
         return mapToDTO(saved);
     }
 
-    public List<SubscriptionDTO> getAllSubscriptions(Department department, Category category, SubscriptionStatus status, String search) {
-        List<Subscription> list = subscriptionRepository.findAll();
+    public List<SubscriptionDTO> getAllSubscriptions(User loggedInUser, Department department, Category category, SubscriptionStatus status, String search) {
+        if (loggedInUser == null) {
+            return List.of();
+        }
+
+        List<Subscription> list;
+        if (loggedInUser.getRole() == com.saas.analytics.model.Role.ROLE_ADMIN) {
+            list = subscriptionRepository.findAll();
+        } else {
+            list = subscriptionRepository.findByLoggedById(loggedInUser.getId());
+        }
 
         return list.stream()
                 .filter(s -> department == null || s.getDepartment() == department)
@@ -88,24 +97,30 @@ public class SubscriptionService {
                 .collect(Collectors.toList());
     }
 
-    public SubscriptionDTO getSubscriptionById(Long id) {
+    public SubscriptionDTO getSubscriptionById(Long id, User loggedInUser) {
         Subscription subscription = subscriptionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Subscription not found with id: " + id));
+
+        verifyOwnership(subscription, loggedInUser);
         return mapToDTO(subscription);
     }
 
-    public SubscriptionDTO updateSubscriptionStatus(Long id, SubscriptionStatus status) {
+    public SubscriptionDTO updateSubscriptionStatus(Long id, SubscriptionStatus status, User loggedInUser) {
         Subscription subscription = subscriptionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Subscription not found with id: " + id));
+
+        verifyOwnership(subscription, loggedInUser);
 
         subscription.setStatus(status);
         Subscription saved = subscriptionRepository.save(subscription);
         return mapToDTO(saved);
     }
 
-    public SubscriptionDTO updateSubscription(Long id, SubscriptionCreateRequest request) {
+    public SubscriptionDTO updateSubscription(Long id, SubscriptionCreateRequest request, User loggedInUser) {
         Subscription subscription = subscriptionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Subscription not found with id: " + id));
+
+        verifyOwnership(subscription, loggedInUser);
 
         subscription.setVendorName(request.getVendorName());
         subscription.setCategory(request.getCategory());
@@ -132,11 +147,24 @@ public class SubscriptionService {
         return mapToDTO(saved);
     }
 
-    public void deleteSubscription(Long id) {
-        if (!subscriptionRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Subscription not found with id: " + id);
+    public void deleteSubscription(Long id, User loggedInUser) {
+        Subscription subscription = subscriptionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Subscription not found with id: " + id));
+
+        verifyOwnership(subscription, loggedInUser);
+        subscriptionRepository.delete(subscription);
+    }
+
+    private void verifyOwnership(Subscription sub, User loggedInUser) {
+        if (loggedInUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Authentication required to access subscription.");
         }
-        subscriptionRepository.deleteById(id);
+        if (loggedInUser.getRole() == com.saas.analytics.model.Role.ROLE_ADMIN) {
+            return; // Admins have elevated organizational oversight
+        }
+        if (sub.getLoggedBy() == null || !sub.getLoggedBy().getId().equals(loggedInUser.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Access denied: You do not own this subscription record.");
+        }
     }
 
     public SubscriptionDTO mapToDTO(Subscription sub) {

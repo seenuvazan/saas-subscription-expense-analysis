@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SubscriptionRepository extends JpaRepository<Subscription, Long>, JpaSpecificationExecutor<Subscription> {
@@ -34,4 +35,14 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
 
     @Query("SELECT s.category, SUM(s.normalizedMonthlyCostUSD) FROM Subscription s WHERE s.status != 'CANCELLED' GROUP BY s.category")
     List<Object[]> findMonthlySpendByCategory();
+
+    List<Subscription> findByLoggedById(Long userId);
+
+    Optional<Subscription> findByIdAndLoggedById(Long id, Long userId);
+
+    @Query("SELECT s.department, SUM(s.normalizedMonthlyCostUSD) FROM Subscription s WHERE s.status != 'CANCELLED' AND s.loggedBy.id = :userId GROUP BY s.department")
+    List<Object[]> findMonthlySpendByDepartmentForUser(@Param("userId") Long userId);
+
+    @Query("SELECT s.category, SUM(s.normalizedMonthlyCostUSD) FROM Subscription s WHERE s.status != 'CANCELLED' AND s.loggedBy.id = :userId GROUP BY s.category")
+    List<Object[]> findMonthlySpendByCategoryForUser(@Param("userId") Long userId);
 }

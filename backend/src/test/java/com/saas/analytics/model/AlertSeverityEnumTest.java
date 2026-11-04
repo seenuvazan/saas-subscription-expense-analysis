@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class AlertSeverityEnumTest {
     @Test
     void testAlertSeverityValues() {
-        assertNotNull(AlertSeverity.valueOf("LOW"));
-        assertNotNull(AlertSeverity.valueOf("MEDIUM"));
-        assertNotNull(AlertSeverity.valueOf("HIGH"));
+        assertNotNull(AlertSeverity.valueOf("INFO"));
+        assertNotNull(AlertSeverity.valueOf("WARNING"));
+        assertNotNull(AlertSeverity.valueOf("CRITICAL"));
     }
 }

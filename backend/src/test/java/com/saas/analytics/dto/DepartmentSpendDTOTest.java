@@ -9,10 +9,10 @@ class DepartmentSpendDTOTest {
     @Test
     void testDepartmentSpendDto() {
         DepartmentSpendDTO dto = new DepartmentSpendDTO();
-        dto.setDepartment(Department.PRODUCT);
-        dto.setSpend(new BigDecimal("4200.00"));
+        dto.setDepartment(Department.ENGINEERING);
+        dto.setActualMonthlySpendUSD(new BigDecimal("4200.00"));
 
-        assertEquals(Department.PRODUCT, dto.getDepartment());
-        assertEquals(new BigDecimal("4200.00"), dto.getSpend());
+        assertEquals(Department.ENGINEERING, dto.getDepartment());
+        assertEquals(new BigDecimal("4200.00"), dto.getActualMonthlySpendUSD());
     }
 }

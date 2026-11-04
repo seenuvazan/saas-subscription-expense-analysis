@@ -3,6 +3,7 @@ package com.saas.analytics.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -37,11 +38,29 @@ public class SecurityConfig {
             .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin())) // For H2 Console
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/h2-console/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                // Demo & authenticated endpoints: resolved via JwtAuthenticationFilter
-                .requestMatchers("/api/subscriptions/**", "/api/analytics/**", "/api/alerts/**", "/api/cron/**", "/api/notifications/**", "/api/profile/**", "/api/users/**").permitAll()
-                .requestMatchers("/api/admin/**", "/api/budgets/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/**").authenticated()
+                // Public endpoints — no token required
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+
+                // Profile endpoints — require valid JWT (resolved by filter)
+                .requestMatchers("/api/profile/**").authenticated()
+
+                // Subscription & analytics — require valid JWT
+                .requestMatchers("/api/subscriptions/**").authenticated()
+                .requestMatchers("/api/invoices/**").authenticated()
+                .requestMatchers("/api/analytics/**").authenticated()
+                .requestMatchers("/api/notifications/**").authenticated()
+                .requestMatchers("/api/alerts/**").authenticated()
+                .requestMatchers("/api/cron/**").authenticated()
+
+                // Admin-only endpoints
+                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/budgets/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/users").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/users/**").authenticated()
+
+                // Everything else
                 .anyRequest().permitAll()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -52,7 +71,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
         configuration.setAllowCredentials(true);

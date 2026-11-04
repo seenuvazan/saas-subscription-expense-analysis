@@ -31,35 +31,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
             String jwt = parseJwt(request);
-            String email = null;
 
-            if (jwt != null) {
-                if ("demo-admin-jwt".equals(jwt)) {
-                    email = "admin@company.com";
-                } else if ("demo-employee-jwt".equals(jwt)) {
-                    email = "employee@company.com";
-                } else if (jwtUtils.validateJwtToken(jwt)) {
-                    email = jwtUtils.getEmailFromToken(jwt);
+            if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+                String email = jwtUtils.getEmailFromToken(jwt);
+
+                if (email != null) {
+                    userRepository.findByEmail(email).ifPresent(user -> {
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        user,
+                                        null,
+                                        Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()))
+                                );
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    });
                 }
-            }
-
-            if (email == null) {
-                String emailHeader = request.getHeader("X-User-Email");
-                if (StringUtils.hasText(emailHeader)) {
-                    email = emailHeader.trim();
-                }
-            }
-
-            if (email != null) {
-                userRepository.findByEmail(email).ifPresent(user -> {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            user,
-                            null,
-                            Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()))
-                    );
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                });
             }
         } catch (Exception e) {
             logger.error("Cannot set user authentication: {}", e);

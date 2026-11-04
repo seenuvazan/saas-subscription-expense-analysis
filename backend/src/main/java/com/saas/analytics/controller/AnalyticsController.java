@@ -22,17 +22,20 @@ public class AnalyticsController {
     private final AnalyticsService analyticsService;
 
     @GetMapping("/summary")
-    public ResponseEntity<AnalyticsSummaryDTO> getSummary() {
-        return ResponseEntity.ok(analyticsService.getExecutiveSummary());
+    public ResponseEntity<AnalyticsSummaryDTO> getSummary(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") com.saas.analytics.entity.User loggedInUser) {
+        return ResponseEntity.ok(analyticsService.getExecutiveSummary(loggedInUser));
     }
 
     @GetMapping("/departments")
-    public ResponseEntity<List<DepartmentSpendDTO>> getDepartmentBreakdown() {
-        return ResponseEntity.ok(analyticsService.getDepartmentSpendBreakdown(null));
+    public ResponseEntity<List<DepartmentSpendDTO>> getDepartmentBreakdown(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") com.saas.analytics.entity.User loggedInUser) {
+        return ResponseEntity.ok(analyticsService.getDepartmentSpendBreakdown(null, loggedInUser));
     }
 
     @GetMapping("/categories")
-    public ResponseEntity<List<CategorySpendDTO>> getCategoryBreakdown() {
+    public ResponseEntity<List<CategorySpendDTO>> getCategoryBreakdown(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : #this") com.saas.analytics.entity.User loggedInUser) {
         return ResponseEntity.ok(analyticsService.getCategorySpendBreakdown(null, null));
     }
 }

@@ -23,11 +23,16 @@ public class JwtUtils {
     }
 
     public String generateToken(String email, String role) {
+        return generateToken(email, role, false);
+    }
+
+    public String generateToken(String email, String role, boolean rememberMe) {
+        long duration = rememberMe ? (30L * 24 * 60 * 60 * 1000) : jwtExpirationMs;
         return Jwts.builder()
                 .subject(email)
                 .claim("role", role)
                 .issuedAt(new Date())
-                .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .expiration(new Date(System.currentTimeMillis() + duration))
                 .signWith(getSigningKey())
                 .compact();
     }

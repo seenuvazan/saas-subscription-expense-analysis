@@ -1,200 +1,208 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI, profileAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  // Initialize from localStorage — only trust what came from a real backend response
   const [user, setUser] = useState(() => {
     try {
-      const isLoggedIn = localStorage.getItem('saasoptima_logged_in') === 'true';
-      const savedUser = localStorage.getItem('user');
-      return isLoggedIn && savedUser ? JSON.parse(savedUser) : null;
+      const token = localStorage.getItem('saasoptima_token');
+      const savedUser = localStorage.getItem('saasoptima_user');
+      return token && savedUser ? JSON.parse(savedUser) : null;
     } catch {
       return null;
     }
   });
 
   const [token, setToken] = useState(() => {
-    const isLoggedIn = localStorage.getItem('saasoptima_logged_in') === 'true';
-    return isLoggedIn ? localStorage.getItem('token') : null;
+    return localStorage.getItem('saasoptima_token') || null;
   });
+
   const [loading, setLoading] = useState(false);
 
+  // Persist token
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem('saasoptima_token', token);
+    } else {
+      localStorage.removeItem('saasoptima_token');
+    }
+  }, [token]);
+
+  // Persist user
   useEffect(() => {
     if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('saasoptima_user', JSON.stringify(user));
     } else {
-      localStorage.removeItem('user');
+      localStorage.removeItem('saasoptima_user');
     }
   }, [user]);
 
-  useEffect(() => {
-    if (token) {
-      localStorage.setItem('token', token);
-    } else {
-      localStorage.removeItem('token');
-    }
-  }, [token]);
-
-  // Synchronize profile with backend if available
-  useEffect(() => {
-    const syncProfile = async () => {
-      try {
-        const res = await profileAPI.getMe();
-        if (res.data) {
-          setUser(prev => ({ ...prev, ...res.data }));
-        }
-      } catch (e) {
-        // Fallback silently if offline or initial load
+  /**
+   * Sync profile from backend after login / on app reload.
+   * Updates stored user with latest data from the server.
+   */
+  const syncProfile = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await profileAPI.getMe();
+      if (res.data) {
+        setUser(prev => {
+          const updated = { ...prev, ...res.data };
+          localStorage.setItem('saasoptima_user', JSON.stringify(updated));
+          return updated;
+        });
       }
-    };
+    } catch (err) {
+      // If 401/403 — token is invalid, log out
+      if (err?.response?.status === 401 || err?.response?.status === 403) {
+        logout();
+      }
+      // Otherwise silently ignore (backend may be starting up)
+    }
+  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // On mount, if we have a token, verify it's still valid by fetching profile
+  useEffect(() => {
     if (token && user) {
       syncProfile();
     }
-  }, [token]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const updateUser = (newUserData) => {
-    setUser(prev => {
-      const updated = { ...prev, ...newUserData };
-      if (updated.firstName && updated.lastName) {
-        updated.fullName = `${updated.firstName} ${updated.lastName}`;
-      }
-      localStorage.setItem('user', JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const login = async (email, password, roleHint = null) => {
+  /**
+   * Login with real credentials. No fallback to demo users.
+   * Returns { success: true } or throws an error with a message.
+   */
+  const login = async (email, password, remember = false) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      let resData = null;
-      let resToken = null;
+      const response = await authAPI.login({
+        email: email.trim().toLowerCase(),
+        password,
+        rememberMe: Boolean(remember),
+      });
+      const data = response.data;
 
-      // Map demo emails to backend seeded accounts if needed
-      const backendEmail = 
-        roleHint === 'ROLE_EMPLOYEE' || email.includes('alex') || email.includes('engineering') || email.includes('employee')
-          ? 'employee@company.com'
-          : 'admin@company.com';
-      const backendPass = backendEmail === 'admin@company.com' ? 'admin123' : 'password123';
-
-      try {
-        // First try the actual email provided
-        const response = await authAPI.login({ email, password });
-        resData = response.data;
-        resToken = response.data?.token;
-      } catch (e1) {
-        try {
-          // If custom demo email, fall back to seeded backend credentials
-          const response = await authAPI.login({ email: backendEmail, password: backendPass });
-          resData = response.data;
-          resToken = response.data?.token;
-        } catch (e2) {
-          // Purely offline or mock mode
-        }
+      if (!data?.token) {
+        throw new Error('Invalid server response — no token received');
       }
 
-      const isEmp =
-        roleHint === 'ROLE_EMPLOYEE' ||
-        email.includes('alex') ||
-        email.includes('engineering') ||
-        email.includes('employee');
+      const userObj = {
+        id: data.id,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        fullName: data.fullName || `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+        jobTitle: data.jobTitle || null,
+        phone: data.phone || null,
+        avatarUrl: data.avatarUrl || null,
+        department: data.department,
+        role: data.role,
+      };
 
-      const fallbackUser = isEmp
-        ? {
-            id: resData?.id || 2,
-            firstName: 'Alex',
-            lastName: 'Morgan',
-            fullName: resData?.fullName || 'Alex Morgan',
-            email: email || 'alex.morgan@engineering.saasoptima.io',
-            jobTitle: 'Engineering Lead',
-            department: 'ENGINEERING',
-            role: 'ROLE_EMPLOYEE',
-            employeeId: 'EMP-1042',
-            location: 'San Francisco, CA',
-            bio: 'Leading core infrastructure, DevOps, and cloud architecture at SaaSoptima.',
-            avatarUrl: null
-          }
-        : {
-            id: resData?.id || 1,
-            firstName: 'Sarah',
-            lastName: 'Chen',
-            fullName: resData?.fullName || 'Sarah Chen',
-            email: email || 'sarah.chen@finance.saasoptima.io',
-            jobTitle: 'Head of Corporate Finance',
-            department: 'FINANCE',
-            role: 'ROLE_ADMIN',
-            employeeId: 'EMP-0018',
-            location: 'New York, NY',
-            bio: 'Directing global enterprise financial governance, cloud commitments, and SaaS audits.',
-            avatarUrl: null
-          };
+      setToken(data.token);
+      setUser(userObj);
 
-      const finalUser = resData && resData.email === email ? resData : fallbackUser;
-      const finalToken = resToken || (isEmp ? 'demo-employee-jwt' : 'demo-admin-jwt');
+      // Immediately fetch fresh profile to ensure we have latest server data
+      try {
+        const profileRes = await profileAPI.getMe();
+        if (profileRes.data) {
+          const enriched = { ...userObj, ...profileRes.data };
+          setUser(enriched);
+          localStorage.setItem('saasoptima_user', JSON.stringify(enriched));
+        }
+      } catch {
+        // Non-fatal — use login response data
+      }
 
-      setToken(finalToken);
-      setUser(finalUser);
-      localStorage.setItem('user', JSON.stringify(finalUser));
-      localStorage.setItem('token', finalToken);
-      localStorage.setItem('saasoptima_logged_in', 'true');
-      return { success: true, user: finalUser };
+      return { success: true, user: userObj };
     } finally {
       setLoading(false);
     }
   };
 
-  const switchRole = async (newRole) => {
-    if (newRole === 'ROLE_ADMIN') {
-      const adminToken = 'demo-admin-jwt';
-      setToken(adminToken);
-      const adminUser = {
-        id: 1,
-        firstName: 'Sarah',
-        lastName: 'Chen',
-        fullName: 'Sarah Chen',
-        email: 'sarah.chen@finance.saasoptima.io',
-        jobTitle: 'Head of Corporate Finance',
-        department: 'FINANCE',
-        role: 'ROLE_ADMIN',
-        employeeId: 'EMP-0018',
-        location: 'New York, NY'
+  /**
+   * Register a new account. Returns { success: true } or throws.
+   */
+  const register = async ({ firstName, lastName, email, password, department }) => {
+    setLoading(true);
+    try {
+      const response = await authAPI.register({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        department: department || undefined,
+      });
+      const data = response.data;
+
+      if (!data?.token) {
+        throw new Error('Registration failed — no token received');
+      }
+
+      const userObj = {
+        id: data.id,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        fullName: data.fullName || `${data.firstName} ${data.lastName}`,
+        jobTitle: data.jobTitle || null,
+        phone: data.phone || null,
+        avatarUrl: data.avatarUrl || null,
+        department: data.department,
+        role: data.role,
       };
-      setUser(adminUser);
-      localStorage.setItem('token', adminToken);
-      localStorage.setItem('user', JSON.stringify(adminUser));
-      localStorage.setItem('saasoptima_logged_in', 'true');
-    } else {
-      const empToken = 'demo-employee-jwt';
-      setToken(empToken);
-      const empUser = {
-        id: 2,
-        firstName: 'Alex',
-        lastName: 'Morgan',
-        fullName: 'Alex Morgan',
-        email: 'alex.morgan@engineering.saasoptima.io',
-        jobTitle: 'Engineering Lead',
-        department: 'ENGINEERING',
-        role: 'ROLE_EMPLOYEE',
-        employeeId: 'EMP-1042',
-        location: 'San Francisco, CA'
-      };
-      setUser(empUser);
-      localStorage.setItem('token', empToken);
-      localStorage.setItem('user', JSON.stringify(empUser));
-      localStorage.setItem('saasoptima_logged_in', 'true');
+
+      setToken(data.token);
+      setUser(userObj);
+      return { success: true, user: userObj };
+    } finally {
+      setLoading(false);
     }
   };
 
-  const logout = () => {
+  /**
+   * Update stored user data (e.g. after profile edit).
+   */
+  const updateUser = useCallback((newUserData) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...newUserData };
+      // Recompute fullName if names changed
+      if (updated.firstName && updated.lastName) {
+        updated.fullName = `${updated.firstName} ${updated.lastName}`.trim();
+      }
+      localStorage.setItem('saasoptima_user', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
+  /**
+   * Logout: clear all session data.
+   */
+  const logout = useCallback(() => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem('saasoptima_token');
+    localStorage.removeItem('saasoptima_user');
+    // Clear old key names too
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     localStorage.removeItem('saasoptima_logged_in');
-  };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, switchRole, updateUser }}>
+    <AuthContext.Provider value={{
+      user,
+      token,
+      loading,
+      login,
+      register,
+      logout,
+      updateUser,
+      syncProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,0 +1,18 @@
+openapi: 3.0.0
+info:
+  title: SaaS Subscription & Expense Analytics API
+  version: 1.0.0
+  description: API for managing enterprise software subscriptions, expenses, and renewals.
+paths:
+  /api/auth/login:
+    post:
+      summary: User login
+      responses:
+        '200':
+          description: Successful authentication
+  /api/subscriptions:
+    get:
+      summary: List subscriptions
+      responses:
+        '200':
+          description: List of subscriptions

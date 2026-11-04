@@ -28,7 +28,16 @@ public class AnalyticsService {
     private final DepartmentBudgetRepository budgetRepository;
 
     public AnalyticsSummaryDTO getExecutiveSummary() {
-        List<Subscription> allSubscriptions = subscriptionRepository.findAll();
+        return getExecutiveSummary(null);
+    }
+
+    public AnalyticsSummaryDTO getExecutiveSummary(com.saas.analytics.entity.User loggedInUser) {
+        List<Subscription> allSubscriptions;
+        if (loggedInUser != null && loggedInUser.getRole() != com.saas.analytics.model.Role.ROLE_ADMIN) {
+            allSubscriptions = subscriptionRepository.findByLoggedById(loggedInUser.getId());
+        } else {
+            allSubscriptions = subscriptionRepository.findAll();
+        }
 
         List<Subscription> activeOrFlagged = allSubscriptions.stream()
                 .filter(s -> s.getStatus() != SubscriptionStatus.CANCELLED)
@@ -75,8 +84,15 @@ public class AnalyticsService {
     }
 
     public List<DepartmentSpendDTO> getDepartmentSpendBreakdown(List<Subscription> activeOrFlagged) {
+        return getDepartmentSpendBreakdown(activeOrFlagged, null);
+    }
+
+    public List<DepartmentSpendDTO> getDepartmentSpendBreakdown(List<Subscription> activeOrFlagged, com.saas.analytics.entity.User loggedInUser) {
         if (activeOrFlagged == null) {
-            activeOrFlagged = subscriptionRepository.findAll().stream()
+            List<Subscription> subs = (loggedInUser != null && loggedInUser.getRole() != com.saas.analytics.model.Role.ROLE_ADMIN)
+                    ? subscriptionRepository.findByLoggedById(loggedInUser.getId())
+                    : subscriptionRepository.findAll();
+            activeOrFlagged = subs.stream()
                     .filter(s -> s.getStatus() != SubscriptionStatus.CANCELLED)
                     .collect(Collectors.toList());
         }

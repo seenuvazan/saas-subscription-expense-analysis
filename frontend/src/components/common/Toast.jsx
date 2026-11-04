@@ -1,13 +1,6 @@
 import React, { useEffect } from 'react';
-import { CheckCircle, XCircle, X } from 'lucide-react';
+import { CheckCircle2, XCircle, X, AlertTriangle, Info } from 'lucide-react';
 
-/**
- * Toast notification component.
- * Props:
- *   toast: { type: 'success' | 'error', message: string } | null
- *   onClose: () => void
- *   duration: number (ms, default 4000)
- */
 const Toast = ({ toast, onClose, duration = 4000 }) => {
   useEffect(() => {
     if (!toast) return;
@@ -17,28 +10,65 @@ const Toast = ({ toast, onClose, duration = 4000 }) => {
 
   if (!toast) return null;
 
-  const isSuccess = toast.type === 'success';
+  const config = {
+    success: {
+      icon: CheckCircle2,
+      bg: 'var(--bg-surface)',
+      border: 'var(--success)',
+      iconColor: 'var(--success)',
+      titleColor: 'var(--text-primary)',
+    },
+    error: {
+      icon: XCircle,
+      bg: 'var(--bg-surface)',
+      border: 'var(--danger)',
+      iconColor: 'var(--danger)',
+      titleColor: 'var(--text-primary)',
+    },
+    warning: {
+      icon: AlertTriangle,
+      bg: 'var(--bg-surface)',
+      border: 'var(--warning)',
+      iconColor: 'var(--warning)',
+      titleColor: 'var(--text-primary)',
+    },
+    info: {
+      icon: Info,
+      bg: 'var(--bg-surface)',
+      border: 'var(--info)',
+      iconColor: 'var(--info)',
+      titleColor: 'var(--text-primary)',
+    },
+  };
+
+  const c = config[toast.type] || config.info;
+  const Icon = c.icon;
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-[9999] flex items-start gap-3 px-5 py-4 rounded-2xl shadow-2xl border max-w-sm animate-slide-up
-        ${isSuccess
-          ? 'bg-emerald-900/90 border-emerald-700/60 text-emerald-100'
-          : 'bg-red-900/90 border-red-700/60 text-red-100'
-        }`}
+      className="fixed bottom-5 right-5 z-[9999] flex items-start gap-3 px-4 py-3.5 rounded-xl shadow-xl max-w-sm animate-slide-up"
+      style={{
+        background: c.bg,
+        border: `1px solid var(--border)`,
+        borderLeft: `3px solid ${c.border}`,
+        boxShadow: 'var(--shadow-lg)',
+      }}
       role="alert"
+      aria-live="polite"
     >
-      {isSuccess
-        ? <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-        : <XCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-      }
-      <p className="text-sm font-medium leading-snug flex-1">{toast.message}</p>
+      <Icon className="w-4 h-4 shrink-0 mt-0.5" style={{ color: c.iconColor }} />
+      <p className="text-sm font-medium leading-snug flex-1" style={{ color: c.titleColor }}>
+        {toast.message}
+      </p>
       <button
         onClick={onClose}
-        className="text-gray-400 hover:text-white transition-colors shrink-0"
+        className="shrink-0 transition-colors p-0.5 rounded"
+        style={{ color: 'var(--text-muted)' }}
+        onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; }}
         aria-label="Close notification"
       >
-        <X className="w-4 h-4" />
+        <X className="w-3.5 h-3.5" />
       </button>
     </div>
   );

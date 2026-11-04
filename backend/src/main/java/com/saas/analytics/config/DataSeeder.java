@@ -13,7 +13,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
+
 @Component
+@Profile({"default", "dev", "local", "test"})
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
@@ -26,75 +29,97 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (userRepository.count() > 0) {
-            return; // Data already seeded
+        // 1. Ensure Demo Accounts Exist and Have Correct Credentials (Idempotent)
+        User employee = userRepository.findByEmail("employee@company.com").orElseGet(() -> {
+            User newEmp = User.builder()
+                    .firstName("Alex")
+                    .lastName("Morgan")
+                    .fullName("Alex Morgan")
+                    .email("employee@company.com")
+                    .password(passwordEncoder.encode("password123"))
+                    .phone("+1 (555) 234-5678")
+                    .dateOfBirth(LocalDate.of(1992, 4, 15))
+                    .gender("MALE")
+                    .jobTitle("Engineering Lead")
+                    .department(Department.ENGINEERING)
+                    .employeeId("EMP-1042")
+                    .location("San Francisco, CA")
+                    .bio("Leading core infrastructure, DevOps, and cloud architecture at SaaSOptima.")
+                    .role(Role.ROLE_EMPLOYEE)
+                    .build();
+            return userRepository.save(newEmp);
+        });
+
+        // Verify/repair employee password if changed or invalid
+        if (!passwordEncoder.matches("password123", employee.getPassword())) {
+            employee.setPassword(passwordEncoder.encode("password123"));
+            employee = userRepository.save(employee);
         }
 
-        // 1. Seed Users with rich profile data
-        User employee = User.builder()
-                .firstName("Alex")
-                .lastName("Morgan")
-                .fullName("Alex Morgan")
-                .email("employee@company.com")
-                .password(passwordEncoder.encode("password123"))
-                .phone("+1 (555) 234-5678")
-                .dateOfBirth(LocalDate.of(1992, 4, 15))
-                .gender("MALE")
-                .jobTitle("Engineering Lead")
-                .department(Department.ENGINEERING)
-                .employeeId("EMP-1042")
-                .location("San Francisco, CA")
-                .bio("Leading core infrastructure, DevOps, and cloud architecture at SaaSOptima.")
-                .role(Role.ROLE_EMPLOYEE)
-                .build();
+        User admin = userRepository.findByEmail("admin@company.com").orElseGet(() -> {
+            User newAdmin = User.builder()
+                    .firstName("Sarah")
+                    .lastName("Jenkins")
+                    .fullName("Sarah Jenkins")
+                    .email("admin@company.com")
+                    .password(passwordEncoder.encode("admin123"))
+                    .phone("+1 (555) 987-6543")
+                    .dateOfBirth(LocalDate.of(1988, 9, 20))
+                    .gender("FEMALE")
+                    .jobTitle("VP of Finance")
+                    .department(Department.FINANCE)
+                    .employeeId("EMP-1001")
+                    .location("New York, NY")
+                    .bio("Overseeing SaaS procurement, departmental budgets, and cloud spend optimization.")
+                    .role(Role.ROLE_ADMIN)
+                    .build();
+            return userRepository.save(newAdmin);
+        });
 
-        User admin = User.builder()
-                .firstName("Sarah")
-                .lastName("Jenkins")
-                .fullName("Sarah Jenkins")
-                .email("admin@company.com")
-                .password(passwordEncoder.encode("admin123"))
-                .phone("+1 (555) 987-6543")
-                .dateOfBirth(LocalDate.of(1988, 9, 20))
-                .gender("FEMALE")
-                .jobTitle("VP of Finance")
-                .department(Department.FINANCE)
-                .employeeId("EMP-1001")
-                .location("New York, NY")
-                .bio("Overseeing SaaS procurement, departmental budgets, and cloud spend optimization.")
-                .role(Role.ROLE_ADMIN)
-                .build();
+        // Verify/repair admin password and role
+        if (!passwordEncoder.matches("admin123", admin.getPassword()) || admin.getRole() != Role.ROLE_ADMIN) {
+            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setRole(Role.ROLE_ADMIN);
+            admin = userRepository.save(admin);
+        }
 
-        User designer = User.builder()
-                .firstName("David")
-                .lastName("Kim")
-                .fullName("David Kim")
-                .email("david.kim@company.com")
-                .password(passwordEncoder.encode("password123"))
-                .phone("+1 (555) 345-6789")
-                .dateOfBirth(LocalDate.of(1994, 11, 8))
-                .gender("MALE")
-                .jobTitle("Staff Product Designer")
-                .department(Department.DESIGN)
-                .employeeId("EMP-1055")
-                .location("Austin, TX")
-                .bio("Designing design systems and user-centric software tools.")
-                .role(Role.ROLE_EMPLOYEE)
-                .build();
+        userRepository.findByEmail("david.kim@company.com").orElseGet(() -> {
+            User designer = User.builder()
+                    .firstName("David")
+                    .lastName("Kim")
+                    .fullName("David Kim")
+                    .email("david.kim@company.com")
+                    .password(passwordEncoder.encode("password123"))
+                    .phone("+1 (555) 345-6789")
+                    .dateOfBirth(LocalDate.of(1994, 11, 8))
+                    .gender("MALE")
+                    .jobTitle("Staff Product Designer")
+                    .department(Department.DESIGN)
+                    .employeeId("EMP-1055")
+                    .location("Austin, TX")
+                    .bio("Designing design systems and user-centric software tools.")
+                    .role(Role.ROLE_EMPLOYEE)
+                    .build();
+            return userRepository.save(designer);
+        });
 
-        userRepository.saveAll(List.of(employee, admin, designer));
+        // 2. Seed Department Budgets (if not already seeded)
+        if (budgetRepository.count() == 0) {
+            budgetRepository.saveAll(List.of(
+                    DepartmentBudget.builder().department(Department.ENGINEERING).monthlyBudgetLimitUSD(BigDecimal.valueOf(18000)).warningThresholdPercent(80).criticalThresholdPercent(100).build(),
+                    DepartmentBudget.builder().department(Department.DESIGN).monthlyBudgetLimitUSD(BigDecimal.valueOf(4000)).warningThresholdPercent(80).criticalThresholdPercent(100).build(),
+                    DepartmentBudget.builder().department(Department.SALES).monthlyBudgetLimitUSD(BigDecimal.valueOf(12000)).warningThresholdPercent(80).criticalThresholdPercent(100).build(),
+                    DepartmentBudget.builder().department(Department.MARKETING).monthlyBudgetLimitUSD(BigDecimal.valueOf(8000)).warningThresholdPercent(80).criticalThresholdPercent(100).build(),
+                    DepartmentBudget.builder().department(Department.HR).monthlyBudgetLimitUSD(BigDecimal.valueOf(3500)).warningThresholdPercent(80).criticalThresholdPercent(100).build(),
+                    DepartmentBudget.builder().department(Department.PRODUCTIVITY).monthlyBudgetLimitUSD(BigDecimal.valueOf(5000)).warningThresholdPercent(80).criticalThresholdPercent(100).build()
+            ));
+        }
 
-        // 2. Seed Department Budgets
-        budgetRepository.saveAll(List.of(
-                DepartmentBudget.builder().department(Department.ENGINEERING).monthlyBudgetLimitUSD(BigDecimal.valueOf(18000)).warningThresholdPercent(80).criticalThresholdPercent(100).build(),
-                DepartmentBudget.builder().department(Department.DESIGN).monthlyBudgetLimitUSD(BigDecimal.valueOf(4000)).warningThresholdPercent(80).criticalThresholdPercent(100).build(),
-                DepartmentBudget.builder().department(Department.SALES).monthlyBudgetLimitUSD(BigDecimal.valueOf(12000)).warningThresholdPercent(80).criticalThresholdPercent(100).build(),
-                DepartmentBudget.builder().department(Department.MARKETING).monthlyBudgetLimitUSD(BigDecimal.valueOf(8000)).warningThresholdPercent(80).criticalThresholdPercent(100).build(),
-                DepartmentBudget.builder().department(Department.HR).monthlyBudgetLimitUSD(BigDecimal.valueOf(3500)).warningThresholdPercent(80).criticalThresholdPercent(100).build(),
-                DepartmentBudget.builder().department(Department.PRODUCTIVITY).monthlyBudgetLimitUSD(BigDecimal.valueOf(5000)).warningThresholdPercent(80).criticalThresholdPercent(100).build()
-        ));
+        // 3. Seed Vendors & Subscriptions (if not already seeded)
+        if (subscriptionRepository.count() > 0) {
+            return;
+        }
 
-        // 3. Seed Vendors & Subscriptions
         LocalDate today = LocalDate.now();
 
         List<Subscription> initialSubs = List.of(

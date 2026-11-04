@@ -9,6 +9,7 @@ import com.saas.analytics.repository.UserRepository;
 import com.saas.analytics.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,61 +28,50 @@ public class ProfileController {
     private final UserService userService;
     private final UserRepository userRepository;
 
-    private User getAuthenticatedUser(String emailHeader, String roleHeader) {
+    /**
+     * Resolves the currently authenticated user from the Spring Security context.
+     * No header-based fallback — authentication is strictly JWT-based.
+     */
+    private User getAuthenticatedUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof User) {
-            return (User) auth.getPrincipal();
+        if (auth != null && auth.getPrincipal() instanceof User user) {
+            return user;
         }
-        if (emailHeader != null && !emailHeader.trim().isEmpty()) {
-            return userRepository.findByEmail(emailHeader.trim())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found for email: " + emailHeader));
-        }
-        if ("ROLE_ADMIN".equalsIgnoreCase(roleHeader)) {
-            return userRepository.findByEmail("admin@company.com")
-                    .orElseThrow(() -> new IllegalArgumentException("Admin account not found"));
-        }
-        return userRepository.findByEmail("employee@company.com")
-                .orElseThrow(() -> new IllegalArgumentException("Employee account not found"));
+        throw new org.springframework.security.access.AccessDeniedException("Not authenticated");
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserProfileDTO> getMyProfile(
-            @RequestHeader(value = "X-User-Email", required = false) String emailHeader,
-            @RequestHeader(value = "X-User-Role", required = false) String roleHeader
-    ) {
-        User user = getAuthenticatedUser(emailHeader, roleHeader);
-        return ResponseEntity.ok(userService.getProfile(user));
+    public ResponseEntity<UserProfileDTO> getMyProfile() {
+        User user = getAuthenticatedUser();
+        // Reload from DB to ensure fresh data (e.g. after profile update in same session)
+        User freshUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found in database"));
+        return ResponseEntity.ok(userService.getProfile(freshUser));
     }
 
     @PutMapping("/me")
-    public ResponseEntity<UserProfileDTO> updateMyProfile(
-            @Valid @RequestBody UpdateProfileRequest request,
-            @RequestHeader(value = "X-User-Email", required = false) String emailHeader,
-            @RequestHeader(value = "X-User-Role", required = false) String roleHeader
-    ) {
-        User user = getAuthenticatedUser(emailHeader, roleHeader);
-        boolean isAdmin = user.getRole() == Role.ROLE_ADMIN;
-        return ResponseEntity.ok(userService.updateProfile(user, request, isAdmin));
+    public ResponseEntity<UserProfileDTO> updateMyProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        User user = getAuthenticatedUser();
+        User freshUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found in database"));
+        boolean isAdmin = freshUser.getRole() == Role.ROLE_ADMIN;
+        return ResponseEntity.ok(userService.updateProfile(freshUser, request, isAdmin));
     }
 
     @PostMapping("/avatar")
-    public ResponseEntity<UserProfileDTO> uploadAvatar(
-            @RequestParam("file") MultipartFile file,
-            @RequestHeader(value = "X-User-Email", required = false) String emailHeader,
-            @RequestHeader(value = "X-User-Role", required = false) String roleHeader
-    ) {
-        User user = getAuthenticatedUser(emailHeader, roleHeader);
-        return ResponseEntity.ok(userService.updateAvatar(user, file));
+    public ResponseEntity<UserProfileDTO> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        User user = getAuthenticatedUser();
+        User freshUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found in database"));
+        return ResponseEntity.ok(userService.updateAvatar(freshUser, file));
     }
 
     @PutMapping("/password")
-    public ResponseEntity<Map<String, String>> changePassword(
-            @Valid @RequestBody ChangePasswordRequest request,
-            @RequestHeader(value = "X-User-Email", required = false) String emailHeader,
-            @RequestHeader(value = "X-User-Role", required = false) String roleHeader
-    ) {
-        User user = getAuthenticatedUser(emailHeader, roleHeader);
-        userService.changePassword(user, request);
+    public ResponseEntity<Map<String, String>> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        User user = getAuthenticatedUser();
+        User freshUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found in database"));
+        userService.changePassword(freshUser, request);
         return ResponseEntity.ok(Collections.singletonMap("message", "Password changed successfully"));
     }
 }

@@ -92,8 +92,10 @@ public class Subscription {
         updatedAt = LocalDateTime.now();
 
         if (cost != null) {
-            BigDecimal monthlyInOriginalCurrency = (billingFrequency == BillingFrequency.ANNUAL)
+            BigDecimal monthlyInOriginalCurrency = (billingFrequency == BillingFrequency.ANNUAL || billingFrequency == BillingFrequency.ANNUALLY)
                     ? cost.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP)
+                    : (billingFrequency == BillingFrequency.QUARTERLY)
+                    ? cost.divide(BigDecimal.valueOf(3), 2, RoundingMode.HALF_UP)
                     : cost;
             double rate = (currency != null) ? currency.getToUsdRate() : 1.0;
             this.normalizedMonthlyCostUSD = monthlyInOriginalCurrency.multiply(BigDecimal.valueOf(rate)).setScale(2, RoundingMode.HALF_UP);
